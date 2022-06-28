@@ -1,0 +1,74 @@
+---
+title: "Optimization"
+author: "Efthymios Ioannis Kavour"
+date: '2022-06-24'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### \underline{Exercise 1}:
+
+Assume that :
+
+$$
+A = \begin{bmatrix}
+3   &  0    &  3    \\
+0   &  1    & -2    \\
+3   & -2    &  8    \\
+\end{bmatrix}
+\quad 
+B = \begin{bmatrix}
+ 2  & -1  &  b   \\
+-1  &  2  & -1   \\
+ b  & -1  &  2   \\
+\end{bmatrix}
+$$
+
+Is $\textbf{A}$ positively definite? Are there values of $\textit{b}$
+that matrix $\textbf{B}$ is positively definite? If yes what are those
+values?
+
+### \underline{Solution}:
+
+We know that a symmetrical matrix $M_{k\times k}\quad k =1,\dots,n$ is positively definite if
+
+1. All the eigen values are positive.
+2. All the $\textit{n}$ upper left determinants of a $M_{k\times k}$ are positive
+3. All the drivers $d_i,\quad\forall i = 1,\dots,n$ in the Gaussian Elimination without interchanging of lines are positive.\
+
+In order to check whether $A$ is positive definite, we are going to calculate all the upper left determinants. As a result we have the following observations. The first term $m_{1\times 1}$ is positive.
+
+$$
+3 > 0
+$$
+
+Furthermore, we can see that the next $\textit{left-upper}$ determinant is the determinant of the $2\times 2$ submatrix, as shown below, which is positive as well.
+
+$$
+\begin{vmatrix}
+3 & 0 \\
+0 & 1
+\end{vmatrix} = 3 > 0
+$$
+Finally what is left is the determinant of the full $3\times 3$ matrix $A$ which as shown below, positive.
+
+
+$$
+\begin{vmatrix}
+3   &  0    &  3    \\
+0   &  1    & -2    \\
+3   & -2    &  8    
+\end{vmatrix} = \\
+$$
+$$
+3\times1\times8+0\times(-2)\times3+3\times0\times(-2)-3\times1\times3-(-2)\times(-2)\times3-8\times0\times0=\\
+$$
+$$
+24+0+0-9-12-0=3>0
+$$
+
+In conclusion, we can see that matrix $A$ is $\textbf{positive define}$. 
+
