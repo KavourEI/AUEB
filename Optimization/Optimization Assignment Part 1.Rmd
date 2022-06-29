@@ -2,11 +2,17 @@
 title: "Optimization"
 author: "Efthymios Ioannis Kavour"
 date: '2022-06-24'
-output: pdf_document
+output: 
+  pdf_document: 
+    latex_engine: xelatex
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(latex2exp)
 ```
 
 ### \underline{Exercise 1}:
@@ -64,11 +70,112 @@ $$
 \end{vmatrix} = \\
 $$
 $$
-3\times1\times8+0\times(-2)\times3+3\times0\times(-2)-3\times1\times3-(-2)\times(-2)\times3-8\times0\times0=\\
+3\cdot1\cdot8+0\cdot(-2)\cdot3+3\cdot0\cdot(-2)-3\cdot1\cdot3-(-2)\cdot(-2)\cdot3-8\cdot0\cdot0=\\
 $$
+
 $$
 24+0+0-9-12-0=3>0
 $$
 
-In conclusion, we can see that matrix $A$ is $\textbf{positive define}$. 
+In conclusion, we can see that matrix $A$ is $\textbf{positive define}$. We are going to follow the exact same methodology in order to answer to the second part of this exercise. Initially we observe that $2>0$ and as a result we move forward and calculate the next determinant of the upper-left submatrix $M_{2\times2}$.
 
+$$
+\begin{vmatrix}
+ 2 &  -1 \\
+-1 & 2 
+\end{vmatrix} = 2\cdot 2 - (-1)\cdot (-1)= 4 - 1 = 3 >0
+$$ 
+The determinant of the submatrix is a positive number. What is left is to calculate the determinant of the full initial matrix, containing the unknown $b$. What we need is $B$ to be a positive definite. This means that: 
+
+$$
+\begin{vmatrix}
+ 2  & -1  &  b   \\
+-1  &  2  & -1   \\
+ b  & -1  &  2  
+\end{vmatrix}=
+$$
+
+$$
+2\cdot 2\cdot 2 + (-1)\cdot (-1)\cdot b + b\cdot (-1)\cdot (-1) - b \cdot 2\cdot b- (-1)\cdot (-1)\cdot 2 - 2 \cdot (-1)\cdot (-1)=
+$$
+
+$$
+8+b+b-2b^2-2-2=-2b^2+2b+4
+$$
+
+As a result we have to find all those $b$ that the equation we ended up. If we follow the usual steps of solving a second order equation we have that:
+
+$$
+−2b^2+2b+4=2(−b−1)(b−2)
+$$
+which means that the $b$ that make this equation equal to zero are $b=-1$ and $b=2$. We know that the equation is going to be positive $\forall b \in (-1,2)$ and negative $\forall b \in (-\infty,-1)\cup(2,\infty)$. This is something one can observe in the following graph.
+
+```{r}
+f1 <- function(x){
+        return(-2*x^2+2*x+4)
+}
+
+curve(expr = f1, from = -2, to = 3)
+points(x = c(-1,2), y = c(0,0), col = 'red')
+abline(h = 0, lty = 2, col = 'red')
+title(main = TeX(r'(\textbf{Equation} : $-2x^2+2x+4$)'))
+```
+
+As a result the solution is the following
+$$
+B\text{ positive-definite} \Leftrightarrow \forall b \in (-1,2)
+$$
+
+******
+
+### \underline{Exercise 2}:
+
+Find all the critical points and say whether they are local minimum, local maximum or saddle points, of the following functions:
+
+$$
+f(x,y)=x^2+2y^2-x
+$$
+$$
+g(x,y)=x^3+y^3-9xy+27
+$$
+$$
+h(x,y)=2x^3+y^3-3x^2y-6y
+$$
+
+### \underline{Solution}:
+We know that a point $(x^*,y^*)$ is critical if $\bigtriangledown f(x^*,y^*)=(0,0)$. After finding a critical point, we can check whether the Hessian Matrix at this point is positive definite or negative definite. If the matrix is positive definite then the point is local minimum. On the other hand, if the Hessian Matrix is negative definite, then it is local maximum.
+Now we can start by finging the partial derivative in order to find out the critical point(s)
+
+
+$$
+\partial_xf(x,y) = 2x - 1\quad\text{and}\quad\partial_yf(x,y) = 4y
+$$
+
+One can easily check that
+
+$$
+\partial_xf(x,y) = 0 \Leftrightarrow x =\frac{1}{2}
+$$
+$$
+\partial_yf(x,y) = 0 \Leftrightarrow y = 0
+$$
+
+So function $f$ has one critical point $(x^*,y^*)=(\frac{1}{2},0)$. Moving forward we have to calculate the Hessian matrix in order to check whether the point is local minimum, local maximum or saddle point.We know that
+
+$$
+\begin{bmatrix}
+\frac{\partial f}{\partial^2x}(x,y) & \frac{\partial f}{\partial x\partial y}(x,y)\\
+\frac{\partial f}{\partial y\partial x}(x,y) & \frac{\partial f}{\partial^2y}(x,y)
+\end{bmatrix} = \begin{bmatrix}
+2 & 0 \\
+0 & 4
+\end{bmatrix}
+$$
+
+We can easily see that this is a positive definite matrix and as a result the critical point is local minimum. Moving on we have function $g(x,y)$.
+
+$$
+\partial_xg(x,y) = 3x^2 - 9y\quad\text{and}\quad\partial_yf(x,y) = 3y^2 -9x
+$$
+
+We can solve the equations above like a system, meaning:
