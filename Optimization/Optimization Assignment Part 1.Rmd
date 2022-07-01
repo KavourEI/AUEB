@@ -21,9 +21,9 @@ Assume that :
 
 $$
 A = \begin{bmatrix}
-3   &  0    &  3    \\
-0   &  1    & -2    \\
-3   & -2    &  8    \\
+3   &  0    &  3 \\
+0   &  1    & -2 \\
+3   & -2    &  8 \\
 \end{bmatrix}
 \quad 
 B = \begin{bmatrix}
@@ -179,3 +179,148 @@ $$
 $$
 
 We can solve the equations above like a system, meaning:
+
+$$
+\begin{cases}
+3x^2 - 9y = 0 \\
+3y^2 -9x = 0
+\end{cases} \Rightarrow
+\begin{cases}
+x^2 - 3y = 0 \\
+y^2 - 3x = 0
+\end{cases} \Rightarrow
+\begin{cases}
+y = \frac{x^2}{3}\\
+y^2 - 3x = 0
+\end{cases}\Rightarrow
+$$
+$$
+(\frac{x^2}{3})^2-3x=0\Rightarrow x^4-27x=0 \Rightarrow x(x^3-27)=0 \Rightarrow
+$$
+$$
+x = 0\quad \text{or}\quad x^3 = 27 \Rightarrow
+$$
+$$
+x = 0 \quad \text{or}\quad x = \sqrt[3]{27} \Rightarrow
+$$
+$$
+x=0 \quad \text{or} \quad x = 3
+$$
+
+Let's assume that $x = 0$ then by inserting this in the next equation we have that $y = 0$. So we have the first critical point which is $(x^*_1,y^*_2) = (0,0)$.\
+On the other hand, let's assume that $x=3$, then we can see that $y = 3$. By those steps, we ended up in a second critical point which is $(x_2^*,y_2^*)=(3,3)$. In order to check and identify what kind of critical points those are, we need to calculate the Hessian determinant in the points we just found. The Hessian matrix can be calculated as follows:
+
+$$
+H(x^*,y^*)=\begin{vmatrix}
+\partial^2_x g(x^*,y^*) & \partial_{xy}g(x^*,y^*) \\
+\partial_{yx}g(x^*,y^*) & \partial^2_y g(x^*,y^*)
+\end{vmatrix}=
+\begin{vmatrix}
+6x^* & -9 \\
+-9 & 6y^*
+\end{vmatrix}
+$$
+So for the first critical point, we have the following result
+
+$$
+H(0,0)= \begin{vmatrix}
+0 & -9\\
+-9 & 0
+\end{vmatrix}=0\cdot0 -(-9)\cdot(-9)=-81 <0
+$$
+
+We ended up that $H(0,0)<0$ meaning that this is a local maximum poitn. Now let us move forward and chech the secotn critical point.
+
+$$
+H(3,3)=\begin{vmatrix}
+6\cdot3 & -9\\
+-9 & 6\cdot3
+\end{vmatrix}= \begin{vmatrix}
+18 & -9 \\
+-9 & 18
+\end{vmatrix} =324 -81 = 243 >0
+$$
+
+As we can see, $H(3,3) = 243$ is greater than zero. This implies that the critical point is local minimum. The last but not least function is 
+
+$$h(x,y)=2x^3+y^3-3x^2y-6y$$
+
+As you may have already thought, we are going to follow the exact same methodology.
+
+$$
+\partial_xh(x,y)=6x^2-6xy\quad \text{and}\quad \partial_yh(x,y)= 3y^2-3x^2-6
+$$
+
+In order to find the critical points, we solve the following system.
+
+$$
+\begin{cases}
+6x^2-6xy = 0\\
+3y^2-3x^2-6 = 0
+\end{cases} \Rightarrow
+\begin{cases}
+6x(x-y)=0\\
+3y^2-3x^2-6 = 0
+\end{cases}\Rightarrow
+$$
+
+From the first equation we have that $6x=0\Rightarrow x=0$ or $x=y$.
+
+Initially, let us assume that $x=0$ from the second equation we have that
+
+$$
+3y^2-6 = 0 \Leftrightarrow y^2 -2 = 0 \Leftrightarrow y =\pm\sqrt2
+$$
+
+Which implies that the critical points obtained are $(x_1^*, y_1^*)=(0,\sqrt2)$ and $(x_2^*, y_2^*)=(0,-\sqrt2)$. Now let us assume that $y = x$ and use this information in the second equation, we have that
+
+$$
+3x^2 - 3x^2 -6 =0 \Leftrightarrow -6 = 0
+$$
+
+Which is a not possible result. In order to continue and describe the kind of the critical points we have found $(x^*, y^*)=(0,\pm\sqrt2)$ we have to define the Hessian matrix and calculate its determinant for each of the critical point.
+
+$$
+H(x^*,y^*)=\begin{vmatrix}
+\partial^2_xh(x^*,y^*) & \partial_{xy}h(x^*,y^*)\\
+\partial_{yx}h(x^*,y^*) & \partial^2_yh(x^*,y^*)
+\end{vmatrix} = \begin{vmatrix}
+12x-6y & -6x \\
+-6x & 6y
+\end{vmatrix}
+$$
+
+So moving forward to calculating the Hessian matrix of the critical points we have the following calculations
+
+$$
+H(0,\sqrt2) = \begin{vmatrix}
+12\cdot0-6\cdot\sqrt2 & -6\cdot0 \\
+-6\cdot0 & 6\cdot\sqrt2
+\end{vmatrix}=\begin{vmatrix}
+-6\sqrt2 & 0\\
+0 & 6\sqrt2
+\end{vmatrix}= -72 <0
+$$
+
+We ended up that $H(0,\sqrt2)=-72<0$ which implies that the critical point is local maximum. 
+On the other hand we have that
+
+$$
+H(0,-\sqrt2) = \begin{vmatrix}
+12\cdot0-6\cdot-\sqrt2 & -6\cdot0 \\
+-6\cdot0 & 6\cdot-\sqrt2
+\end{vmatrix}=\begin{vmatrix}
+6\sqrt2 & 0\\
+0 & -6\sqrt2
+\end{vmatrix}= -72 <0
+$$
+Again as the previous critical point we see that the determinant of $H(x_2^*,y_2^*)$ results to $-72$ which less than zero and this implies that the critical point is a local maximum as well.
+
+******
+
+### \underline{Exercise 3}:
+
+Find all the 
+
+
+### \underline{Solution}:
