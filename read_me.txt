@@ -1,4 +1,6 @@
 All the assignments that are completed during my master states in AUEB
 
-Optimization 1 (Zazanis)
-Optimization 2 (Giannakopoulos)
+Optimization-Assignment-Part-1 (Zazanis)
+Optimization Assignment Part 2.ipynb (Giannakopoulos)
+Assignment (Part_B) Leivada
+Assignment (Part_A) Vrontos
