@@ -1,0 +1,278 @@
+---
+title: "Time Series ASssignment"
+author: "Efthymios Ioannis Kavour"
+date: "5/28/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment:
+
+The data you will have to analyze are in the  excel file with the name JP_MORGAN_US_FUNDS.The dependent variables for which you will construct the models you are asked for are the returns of different US Mutual Funds (22 mutual fund returns, sheet: ‘JP_MORGAN_US’) for the period 8/1987 – 7/2019. The independent variables you will use in the models refer to monthly returns for the variables *x1 = Mkt-Rf*, *x2 = SMB*, *x3 = HML*, *x4 = RMW*, *x5 = CMA*, *x6 = MOM*, for the period 8/1987 - 7/2019 (sheet: ‘Factors’, Note: divide the factor values/100).
+Analyze the dependent variables based on data for the period 8/1987 - 7/2017 [You will not use the data for the period 8/2017 - 7/2019]:
+
+  1. Construct an appropriate time series model (AR, MA, ARMA).
+  
+  2. Develop an appropriate regression model
+    a. In case of autocorrelation problem of regression residuals, correct the autocorrelation problem (using time series AR, MA, ARMA models).
+    b. In case of heteroscedasticity problem of regression residuals, correct the heteroskedasticity problem (using time-varying ARCH, GARCH models).
+  
+  3. Write the models you have found at questions (1) - (2). Assess the goodness of fit of these models based on the AIC and BIC information criteria.
+  
+  4. Based on the estimated models of questions (1) - (2), construct forecasts of the analyzed series for the period 8/2017 - 7/2019, and evaluate the forecasts you have found by using two evaluation criteria: a. the mean square prediction error and b. the Hit ratio (indicates the percentage of predictions that correctly evaluate the sign of the actual value of the dependent variable.)
+[Each student will have to analyze one only dependent variables]. Date of delivery of the assignment: 1/6/2021, 11:59.
+
+## Solution:
+
+Initially we are going to set all the packages that we are going to use, as a result:
+
+```{r, warning=FALSE}
+library(readxl)
+library(tseries)
+library(urca)
+library(fGarch)
+library(rugarch)
+```
+
+In order to begin our analysis, we are going to import our data.
+
+```{r, warning=FALSE}
+jpmorgan_1 <- read_excel("/Users/themiskavour/Documents/GitHub_Repos_WIP/Time_Series/JP_MORGAN_US_FUNDS.xlsx", sheet = 1, col_names = TRUE)
+jpmorgan_2 <- read_excel("/Users/themiskavour/Documents/GitHub_Repos_WIP/Time_Series/JP_MORGAN_US_FUNDS.xlsx", sheet = 2, col_names = TRUE)
+```
+
+Next we need to bring everything in the right formation as the way they are imported are not appropriate for our analysis.
+
+```{r, warning=FALSE}
+colnames(jpmorgan_1)[1] <- 'Dates'
+colnames(jpmorgan_2)[1] <- 'Dates'
+
+jp1 <- apply(apply(jpmorgan_1,2,gsub, patt = ',', replace = '.'),2,as.numeric)
+jp2 <- apply(apply(jpmorgan_2,2,gsub, patt = ',', replace = '.'),2,as.numeric)
+jp2[,2:7] <- jp2[,2:7]/100
+jp1 <- data.frame(jp1)
+jp1 <- jp1[-1,]
+
+y <- jp1[,10]
+head(y, n =5)
+```
+Since the first few values are NA meaning that there has not been a recorded value for the variable that I have selected, the steps that I am going to do are the folloewing. Inicially, I am going to define the time series object for the period of time that is requested. Then I am going to use the function *na.omit()* in order to give to R the permission to delete all the lines that do not have values, which are the first 113 rows.
+```{r, warning=FALSE}
+yts <- ts(data = y, frequency = 12, start = c(1987,8), end = c(2017,7))
+yts <- na.omit(yts)
+plot(yts)
+```
+
+What one can clearly see in this first plot of our time series object is that the variance is not constant over time. So we should check whether we are going to use models to fix such a problem. But let's leave that to a later analysis. Initially, what I am going to check is whether the series is stationary. If this does not hold in our case that we may need to make some modifications in order to correct that as well. As a result we have the following.
+
+```{r, warning=FALSE}
+par(mfrow = c(1,2))
+acf(yts, main = 'ACF plot of JAMCX' )
+pacf(yts, main ="PACF plot of JAMCX")
+summary(ur.df(yts,type="trend"))
+```
+What one can see from the plots is that we have white noise. Meaning that the past contains no power over to what is going to happen today. Also, from the summary's output,we can learn the following about our time series object.
+  1. The models is the following $\Delta y_t = 8.402e^{-03}-1.003y_{t-1}-1.428e^{-06}+7.365e^{-02}*\Delta y_{t-1}$
+  2. The model is explained by those factors at a percentage of $46.51%$ 
+  3. The series is stationary as $-3.98>-11.98,\ -3.412>-11.98$ and $-3.13>-11.98$.
+  4. Finally, one could say the the trend seems to not be statistical significant.
+
+Apart from that, we can apply the *adf.test()* function to apply the Dickey Fuller straight forward, and check the stationarity:
+
+```{r, warning=FALSE}
+adf.test(yts)
+```
+
+Which confirms our previous result. Since we do not have any autocorrelation with any of the lags, as we see form the plots created above, we do not move any further with this process.
+Now it is time to check if there is any action required to fix volatility's problem across time. 
+
+```{r, warning=FALSE}
+par(mfrow = c(2,2))
+acf(ts(yts,1),12, main = 'ACF plot of JAMCX' )
+pacf(ts(yts,1),12, main ="PACF plot of JAMCX")
+acf(ts(yts^2,1),12, main = 'ACF plot of squared values' )
+pacf(ts(yts^2,1),12, main ="PACF plot of  squared values")
+```
+
+If seems that we need to introduce a $GARCH(p,q)$ model for $p \in \{1,6\}$ and $q \in \{1,6\}$. In order to do that we follow the next steps. We will start with an ARCH(1) model.
+
+```{r, warning=FALSE}
+m1arch <- garchFit(~garch(1,0), data = yts, trace = F)
+summary(m1arch)
+```
+
+Next I am going to calculate the ARCH(6) model
+
+```{r, warning=FALSE}
+m6arch <- garchFit(~garch(6,0), data = yts, trace = F)
+summary(m6arch)
+```
+
+So from the two ARCH models, the ARCH(6) is preferred. Next we are going to check GARCH(1,1), and move forward to select the best one, in order to present the full model.
+
+```{r, warning=FALSE}
+m11garch <- garchFit(~garch(1,1), data = yts, trace = F)
+summary(m11garch)
+```
+
+Next one in the line is GARCH(1,6).
+
+```{r, warning=FALSE}
+m16garch <- garchFit(~garch(1,6), data =yts, trace = F)
+summary(m16garch)
+```
+
+This, is worst than the previous one $GARCH(1,1)$ as a result this is not an option. What is left is $GARCH(6,1)$ and $GARCH(6,6)$. Hence,
+
+```{r, warning=FALSE}
+m61garch <- garchFit(~garch(6,1), data =yts, trace = F)
+summary(m61garch)
+```
+
+```{r, warning=FALSE}
+m66garch <- garchFit(~garch(6,6), data =yts, trace = F)
+summary(m66garch)
+```
+
+As a result, the best model that we keep for analysis is the $ARCH(6)$. The models if the following: $$y_t = 1.165e^{-028} + \varepsilon_t$$ $$\varepsilon_t/\Phi_t \sim N(0,\sigma_t^2)$$ $$\sigma_t^2 = 5.336^{e-04} + 3.425e^{-01}\epsilon_{t-1}^2 + \dots + 2.163e^{-01}\varepsilon_{t-6}^2$$ with AIC being-3.333298.
+
+Moving to the second question we need to define our factors in order to begin by establishing a linear model.
+
+```{r, warning=FALSE}
+Mkt_RF <- jp2[114:360,2]
+SMB <- jp2[114:360,3]
+HML <- jp2[114:360,4]
+RMW <- jp2[114:360,5]
+CMA <- jp2[114:360,6]
+MOM <- jp2[114:360,7]
+```
+
+So we are ready to establish our simple, linear regression.
+
+```{r}
+simLN <- lm(yts ~ Mkt_RF + SMB + HML + RMW + CMA + MOM)
+summary(simLN)
+```
+
+What we obtain by the last output is that the variables, HML, and CMA seem to not be statistical significant. Apart from that we can say that 90.4% of of the variable y is explained by our variables currently in the model. Let us now use the *step* function to see if the full model is the best one model to continue with.
+
+```{r, warning=FALSE}
+step(simLN)
+```
+
+So we see that the best model is the one where HML and CMA are extracted. Hence the best possible model is the following:
+
+```{r, warning=FALSE}
+simLN_best <- lm(yts ~ Mkt_RF + SMB + RMW + MOM)
+summary(simLN_best)
+```
+
+
+Let us take a closer look to the plots of the model's residuals
+```{r, warning=FALSE}
+par(mfrow=c(2,2))
+plot(simLN_best)
+```
+
+It is time to conduct diagnostic test for the residuals. Initially, we are going to check the autocorrelation of the residuals. As a result:
+
+```{r, warning=FALSE}
+par(mfrow = c(1,2))
+acf(simLN_best$residuals, 36)
+pacf(simLN_best$residuals, 36)
+```
+
+By the plots created above (*ACF and PACF of residuals of the model*), it is suggested that we may need to model them by an AR or MA model as there seems to exist some information in the past that has impact on time t's residuals values. Though in this point, I am really interested in visualizing the residuals:
+
+```{r, warning=FALSE}
+residuals <- residuals(simLN_best)
+rests <- ts(residuals, 12,  start = c(1987,8), end = c(2019,7))
+plot(rests, main = 'Residuals of Linear Regression Model', ylb = 'Residual')
+```
+
+We see that there may be some volatility problem. Though, Initially, what we need is to check if this new time series is stationary in order to start 'fixing' the problems for our model. We are going to use the Dickey Fuller Test with the help of the function *adf.test()*. As a result
+
+```{r, warning=FALSE}
+adf.test(rests)
+```
+As a result, the series is stationary. The next step to our analysis is to correct, the imperfections. Due to the volatility issues observed from the time series's plot we are going to test whether an *ARCH*-kind model is needed. The way this is going to happen is by using the function *ArchTest()* from the package *FinTS*. Another way to conduct this test is by checking the squared residuals' autocorrelation and partial autocorrelation plots. But first things first. Let us take a first impression and then dig deeper!
+
+```{r, warning= FALSE}
+FinTS :: ArchTest(rests)
+```
+
+The outcome of this result, as one may see is to reject the Null Hypothesis $H_0$. This enforces our initialy intuition about the need of an *ARCH*-kind model. But now let us see if it is needed with the help of ACF and PACF plots as this way we will be aple to see which model is better and at which p and q!
+
+```{r, warning=FALSE}
+par(mfrow = c(2,2))
+acf(ts(rests,1), 12, main = 'ACF plot of re')
+pacf(ts(rests,1), 12)
+acf(ts(rests^2,1), 12)
+pacf(ts(rests^2,1), 12)
+```
+As we can see from the plots created above, we can see that we have a problem at the initial values of the linear model's residuals as well as the squared values of the residuals. Initially, we will try to model, the time series residuals using AR, MA or ARMA models, and later on according to what we manage to correct with our model, we are going to move forward with ARCH or GARCH models. 
+
+Initially, we are goin g to define a matrix X with all the factors that we end up using, meaning *Mkt_RF*, *SMB*, *RMW*, *MOM*.
+
+```{r}
+X <- matrix(cbind(Mkt_RF,SMB,RMW,MOM),ncol=4)
+```
+
+Initially, we are going to try and fix the autocorrelation of the residuals. After some tests, we see that the most appropriate test to use here is an AR(9) restricted.
+
+```{r}
+mar9_res <- arima(rests, order = c(0,0,9), fixed = c(0,0,0,0,0,0,0,NA,NA), include.mean = FALSE)
+summary(mar9_res)
+```
+
+Let's take a closer look at the residuals of the residuals' time series wwe just created.
+
+```{r}
+par(mfrow = c(1,2))
+acf(ts(residuals(mar9_res),1),12, main = "ACF of the Residuals")
+pacf(ts(residuals(mar9_res),1),12, main = "PACF of the Residuals")
+```
+Let's now take a look at the ACF and PACF squared residuals of the plots.
+
+```{r}
+par(mfrow = c(1,2))
+acf(ts(residuals(mar9_res)^2,1),12, main = "ACF of the Squared Residuals")
+pacf(ts(residuals(mar9_res)^2,1),12, main = "PACF of the Squared Residuals")
+```
+
+As we see, there is still some problem in the squared residuals. As a result, we need to fix that as well!
+
+```{r}
+lin_mdl <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder=c(0,2)), mean.model = list(armaOrder=c(0,9), include.mean = TRUE, external.regressors = X), distribution.model = "norm")
+modelres <- ugarchfit(spec = lin_mdl, data = yts)
+modelres
+lin_mdl
+```
+
+```{r}
+par(mfrow = c(1,2))
+acf(residuals(modelres),12, main = "ACF plot pf the residuals")
+pacf(residuals(modelres),12, main = "PACF plot of the residuals")
+```
+As we can see we have corrected this problem as well. As a result, we are ready to proceed to forecasts! In order to move forward, we need to define, predicted values and actual values. This is done as followed.
+
+```{r}
+pred_m11garch <- predict(m11garch,24)[,1]
+actual_values <- jp1[361:384,10]
+```
+
+Now what is needed to be done is to evaluate the predictions with the help of known algorithms. Initially, we will use the mean square prediction error. This is done by the following way: $$ MSE = \frac{1}{n}\sum_{i = 1}^n(Y_i-\hat{Y_i})^2$$, where $Y_i$ for $i = 1,2,\dots,n$ is the actual values and $\hat{Y_i}$ for $i = 1,2,\dots,n$ is the predicted values.
+
+```{r}
+sqrt(mean((actual_values - pred_m11garch)^2))
+```
+
+This result indicates that we have a good model, that predicts sufficiently good real data. Another way to evaluate our model is by Hit Ratio. This is going to be computed with the help of the function *hit.ratio* by the package *fDMA*. 
+
+```{r}
+fDMA::hit.ratio(actual_values, pred_m11garch)
+```
+The result tells us that 82.61% of the values are correctly predicted.

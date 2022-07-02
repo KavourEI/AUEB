@@ -1,0 +1,609 @@
+---
+title: "FInal Assignment"
+author: "Efthymios Ioannis Kavour"
+date: "4/4/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Assignment :
+
+1) Present the plots of the Data assigned to you.
+2) In each one of the series find a suitable trend : Apply the polynomial form of trend or the moving average.
+3) Present the trend-cycle of the series by one of the following options:
+  - With substitution or division of the trend
+  - Apply the moving average plot to show the cycle of the series.
+4) Present the cycle of the series in a plot and find the leader of them.
+5) (Optional) Check the stationary of the series used.
+
+# Solutions:
+
+### 1) Present the plots of the data assigned to you.
+
+The datasets that we have to analyse about Croatia, are Unemployment Rate, Inflation rate, GDP per capita and GINI Index of the mentioned country. 
+
+Unemployment rate is calculated by expressing the number of able to work but unemployed people as a percentage of the total number of people in labor force of a country. The labor force of a country is described as the number of people employed and the number of people unemployed.
+
+Inflation is the rate at which the value of a currency is falling and, consequently, the general level of prices for goods and services is rising. Inflation is sometimes classified into three types:
+1. Demand-Pull inflation
+2. Cost-Push inflation
+3. Built-In inflation
+
+Moving forward, GDP can be calculated by adding up all of the money spent by consumers, businesses and government in a given period. It may also be calculated by adding up all of the money received by all the participants in the economy. In either case, the number is an estimate of 'nominal GDP'.
+
+Finally, the Gini Index measures the area between the Lorenz curve and a hypothetical line of absolute equality, expressed as a percentage of the maximum area under the line. Thus a Gini index of 0 represents perfect equality, while an index of 100 implies perfect inequality. 
+
+  - A Lorenz curve is a graphical representation of the distribution of income or wealth within a population. Lorenz curves graph percentiles of the population against cumulative income or wealth of people at or below that percentile.
+
+Now, that we have an idea what each of the variables represent, we need to load some libraries in order to begin our analysis.
+
+``` {r, message = FALSE}
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(tsibble)
+library(ggplot2)
+library(fpp3)
+library(forecast)
+library(fable)
+library(fabletools)
+library(zoo)
+library(slider)
+```
+
+Apart from the libraries, as a basic step, we need to load the time series data for the aforementioned variables. 
+
+```{r, include = FALSE}
+unemp <- read_xlsx(path = "/Users/themiskavour/Downloads/Time Series Course/Final Assignment/Data/Databank/Unemployment.xlsx")
+infl <- read_xlsx(path = "/Users/themiskavour/Downloads/Time Series Course/Final Assignment/Data/Databank/Inflation Rate (Consumer Price).xlsx")
+gdp <- read_xlsx(path = "/Users/themiskavour/Downloads/Time Series Course/Final Assignment/Data/Databank/GDP per capita.xlsx")
+gini <- read.csv(file = '/Users/themiskavour/Downloads/Time Series Course/Final Assignment/Data/Databank/Gini.csv', sep = ';',header = T)
+```
+
+There are some actions needed to bring the data to the correct form, meaning, we have to pivot the excel files and keep only the range of years for which we have data. 
+
+For the Unemployment data we have the following transformations 
+
+```{r}
+unemp_pivot <- unemp %>% 
+  select(`1991 [YR1991]`:ncol(unemp)) %>% 
+  pivot_longer(cols = everything(), names_to = "Year", values_to = 'Unemployment') %>% 
+  separate(col = Year, into = 'Year', sep = " ", remove = TRUE) %>% 
+  drop_na('Unemployment')
+```
+
+Let us now check if there are any missing values in our datasheet and if everything filled with a value, hopefully (!), we will proceed by transforming the data to a time series object.
+
+```{r}
+unemp_pivot %>% 
+  summarise(sum(is.na("Unemployment")))
+
+unemp_ts <- tsibble(Year = 1991:2020,
+                    Unemployment = unemp_pivot$Unemployment,
+                    index = Year)
+unemp_ts
+```
+
+Same procedure is going to be followed for the rest of the data sets! Hence, for inflation,
+
+```{r}
+infl_pivot <- infl %>% 
+  select(`1986 [YR1986]`:ncol(infl)) %>% 
+  drop_na(everything()) %>% 
+  pivot_longer(col = everything(), names_to = "Year", values_to = 'Inflation') %>% 
+  separate(col = 'Year', into = 'Year', sep = ' ')
+
+infl_pivot %>% 
+  summarise(sum(is.na('Inflation')))
+
+infl_ts <- tsibble(Year = 1986:2020,
+                   Infaltion = infl_pivot$Inflation,
+                   index = Year)
+infl_ts
+```
+
+GDP per capita,
+
+```{r}
+gdp_pivot <- gdp %>% 
+  select(`1995 [YR1995]`:ncol(gdp)) %>% 
+  drop_na(everything()) %>% 
+  pivot_longer(col = everything(), names_to = 'Year', values_to = 'Gdp per Capita ($)') %>% 
+  separate(col = 'Year', into = 'Year', sep = ' ')
+
+gdp_pivot %>% 
+  summarise(sum(is.na(`Gdp per Capita ($)`)))
+
+gdp_ts <- tsibble(Year = 1995:2020,
+                  GDP = gdp_pivot$`Gdp per Capita ($)`,
+                  index = Year)
+gdp_ts
+```
+
+and finally GINI,
+
+```{r}
+gini_pivot <- gini %>% 
+  select(X, X.1) %>% 
+  rename(Year = X, `Gini Index` = X.1) %>% 
+  slice(2:43)
+
+gini_pivot %>% 
+  summarise(sum(is.na(`Gini Index`)))
+
+gini_ts <- tsibble(Year = 1980:2021,
+                   GINI = as.double(gini_pivot$`Gini Index`),
+                   index = Year)
+gini_ts$GINI
+```
+
+Initially, what we need is to see the raw data, meaning the plot of the time series data. As a result, separaterly, we have:
+
+```{r}
+autoplot(unemp_ts, Unemployment, col = 'red') +
+  labs(title = expression(underline('Unemployment of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'Unemployment, total (% of total labor force)') +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5)) +
+  geom_point(data = unemp_ts[which.min(unemp_ts$Unemployment),], size = 2, shape = 1) +
+  annotate(geom = 'text', 
+           x = unemp_ts$Year[unemp_ts$Unemployment == min(unemp_ts$Unemployment)],
+           y = min(unemp_ts$Unemployment) + 1,
+           label = round(min(unemp_ts$Unemployment),2),
+           size = 3) + 
+  annotate(geom = 'text', 
+           x = unemp_ts$Year[unemp_ts$Unemployment == min(unemp_ts$Unemployment)],
+           y = min(unemp_ts$Unemployment) + 0.5,
+           label = unemp_ts$Year[unemp_ts$Unemployment == min(unemp_ts$Unemployment)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = unemp_ts$Year[unemp_ts$Unemployment == min(unemp_ts$Unemployment)],
+           xend = unemp_ts$Year[unemp_ts$Unemployment == min(unemp_ts$Unemployment)],
+           y = min(unemp_ts$Unemployment), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted') +
+  geom_point(data = unemp_ts[which.max(unemp_ts$Unemployment),], size = 2, shape = 1) +
+  annotate(geom = 'text',
+           x = unemp_ts$Year[unemp_ts$Unemployment == max(unemp_ts$Unemployment)],
+           y = max(unemp_ts$Unemployment) + 1,
+           label = round(max(unemp_ts$Unemployment),2),
+           size = 3) + 
+  annotate(geom = 'text',
+           x = unemp_ts$Year[unemp_ts$Unemployment == max(unemp_ts$Unemployment)],
+           y = max(unemp_ts$Unemployment) + 0.5,
+           label = unemp_ts$Year[unemp_ts$Unemployment == max(unemp_ts$Unemployment)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = unemp_ts$Year[unemp_ts$Unemployment == max(unemp_ts$Unemployment)],
+           xend = unemp_ts$Year[unemp_ts$Unemployment == max(unemp_ts$Unemployment)],
+           y = max(unemp_ts$Unemployment), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted')
+```
+
+Moving forward, similarly for the rest of the variables we have the following:
+
+```{r}
+autoplot(infl_ts, Infaltion, col = 'red') +
+  labs(title = expression(underline('Inflation rate for consumer prices of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'Inflation rate') +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5)) +
+  geom_point(data = infl_ts[which.min(infl_ts$Infaltion),], size = 2, shape = 1) +
+  annotate(geom = 'text', 
+           x = infl_ts$Year[infl_ts$Infaltion == min(infl_ts$Infaltion)],
+           y = min(infl_ts$Infaltion) + 130,
+           label = round(min(infl_ts$Infaltion),2),
+           size = 3) + 
+  annotate(geom = 'text', 
+           x = infl_ts$Year[infl_ts$Infaltion == min(infl_ts$Infaltion)],
+           y = min(infl_ts$Infaltion) + 80,
+           label = infl_ts$Year[infl_ts$Infaltion == min(infl_ts$Infaltion)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = infl_ts$Year[infl_ts$Infaltion == min(infl_ts$Infaltion)],
+           xend = infl_ts$Year[infl_ts$Infaltion == min(infl_ts$Infaltion)],
+           y = min(infl_ts$Infaltion), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted') +
+  geom_point(data = infl_ts[which.max(infl_ts$Infaltion),], size = 2, shape = 1) +
+  annotate(geom = 'text',
+           x = infl_ts$Year[infl_ts$Infaltion == max(infl_ts$Infaltion)],
+           y = max(infl_ts$Infaltion) + 130,
+           label = round(max(infl_ts$Infaltion),2),
+           size = 3) + 
+  annotate(geom = 'text',
+           x = infl_ts$Year[infl_ts$Infaltion == max(infl_ts$Infaltion)],
+           y = max(infl_ts$Infaltion) + 80,
+           label = infl_ts$Year[infl_ts$Infaltion == max(infl_ts$Infaltion)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = infl_ts$Year[infl_ts$Infaltion == max(infl_ts$Infaltion)],
+           xend = infl_ts$Year[infl_ts$Infaltion == max(infl_ts$Infaltion)],
+           y = max(infl_ts$Infaltion), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted')
+```
+
+```{r}
+autoplot(gdp_ts, GDP, col = 'red') +
+  labs(title = expression(underline('GDP per capita of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'GDP per Capita') +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5)) +
+  geom_point(data = gdp_ts[which.min(gdp_ts$GDP),], size = 2, shape = 1) +
+  annotate(geom = 'text', 
+           x = gdp_ts$Year[gdp_ts$GDP == min(gdp_ts$GDP)],
+           y = min(gdp_ts$GDP) + 1000,
+           label = round(min(gdp_ts$GDP),2),
+           size = 3) + 
+  annotate(geom = 'text', 
+           x = gdp_ts$Year[gdp_ts$GDP == min(gdp_ts$GDP)],
+           y = min(gdp_ts$GDP) + 500,
+           label = gdp_ts$Year[gdp_ts$GDP == min(gdp_ts$GDP)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = gdp_ts$Year[gdp_ts$GDP == min(gdp_ts$GDP)],
+           xend = gdp_ts$Year[gdp_ts$GDP == min(gdp_ts$GDP)],
+           y = min(gdp_ts$GDP), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted') +
+  geom_point(data = gdp_ts[which.max(gdp_ts$GDP),], size = 2, shape = 1) +
+  annotate(geom = 'text',
+           x = gdp_ts$Year[gdp_ts$GDP == max(gdp_ts$GDP)],
+           y = max(gdp_ts$GDP) + 1000,
+           label = round(max(gdp_ts$GDP),2),
+           size = 3) + 
+  annotate(geom = 'text',
+           x = gdp_ts$Year[gdp_ts$GDP == max(gdp_ts$GDP)],
+           y = max(gdp_ts$GDP) + 500,
+           label = gdp_ts$Year[gdp_ts$GDP == max(gdp_ts$GDP)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = gdp_ts$Year[gdp_ts$GDP == max(gdp_ts$GDP)],
+           xend = gdp_ts$Year[gdp_ts$GDP == max(gdp_ts$GDP)],
+           y = max(gdp_ts$GDP), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted')
+```
+
+```{r}
+autoplot(gini_ts, GINI, col = 'red') +
+  labs(title = expression(underline('GINI index of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'GINI index') +
+  theme_minimal() + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5)) +
+  geom_point(data = gini_ts[which.min(gini_ts$GINI),], size = 2, shape = 1) +
+  annotate(geom = 'text', 
+           x = gini_ts$Year[gini_ts$GINI == min(gini_ts$GINI)],
+           y = min(gini_ts$GINI) + 0.01,
+           label = round(min(gini_ts$GINI),2),
+           size = 3) + 
+  annotate(geom = 'text', 
+           x = gini_ts$Year[gini_ts$GINI == min(gini_ts$GINI)],
+           y = min(gini_ts$GINI) + 0.005,
+           label = gini_ts$Year[gini_ts$GINI == min(gini_ts$GINI)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = gini_ts$Year[gini_ts$GINI == min(gini_ts$GINI)],
+           xend = gini_ts$Year[gini_ts$GINI == min(gini_ts$GINI)],
+           y = min(gini_ts$GINI), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted') +
+  geom_point(data = gini_ts[which.max(gini_ts$GINI),], size = 2, shape = 1) +
+  annotate(geom = 'text',
+           x = gini_ts$Year[gini_ts$GINI == max(gini_ts$GINI)],
+           y = max(gini_ts$GINI) + 0.01,
+           label = round(max(gini_ts$GINI),2),
+           size = 3) + 
+  annotate(geom = 'text',
+           x = gini_ts$Year[gini_ts$GINI == max(gini_ts$GINI)],
+           y = max(gini_ts$GINI) + 0.005,
+           label = gini_ts$Year[gini_ts$GINI == max(gini_ts$GINI)],
+           size = 2) + 
+  annotate(geom = 'segment',
+           x = gini_ts$Year[gini_ts$GINI == max(gini_ts$GINI)],
+           xend = gini_ts$Year[gini_ts$GINI == max(gini_ts$GINI)],
+           y = max(gini_ts$GINI), 
+           yend = 0, 
+           colour = 'black', linetype = 'dotted')
+```
+
+### 2) In each one of the series find a suitable trend : Apply the polynomial form of trend or the moving average.
+
+Now, as for the second part of this assignment we have to construct and plot the polynomial form of the trend or the moving average. Here in one plot, we are going to construct the first, second, up until fifth order polynomial trend, and plot them. What we expect is that the linear form is going to be a straight line, the second is going to give us back some small curve, and as we move forward the polynomial is going to fit better and better to our raw data. 
+Apart from the requested information, here a small forecast for two years is going to be provided with 95% statistical significance.
+
+```{r}
+fit_unem <- unemp_ts %>% 
+  model(
+    Linear = TSLM(Unemployment ~ trend()),
+    `2nd Order` = TSLM(Unemployment ~ trend() + I(trend()^2)),
+    `3rd Order` = TSLM(Unemployment ~ trend() + I(trend()^2) + I(trend()^3)),
+    `4th Order` = TSLM(Unemployment ~ trend() + I(trend()^2) + I(trend()^3) + I(trend()^4)))
+
+fore_unem1 <- fit_unem %>% 
+  forecast(h = '1 years')
+
+unemp_ts %>% 
+  autoplot(Unemployment) + 
+  geom_line(data = fitted(fit_unem),
+            aes(y = .fitted, color = .model)) + 
+  autolayer(fore_unem1, alpha = 0.5, level = 95) + 
+  labs(title = expression(underline('Unemployment Smoothing models')),
+       subtitle = '1991 - 2020',
+       x = 'Period of Time',
+       y = 'Unemployment, total (% of total labor force)') + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+
+What we have to do now is repeat the process we just completed for the variable of Unemployment, for the rest of the variables that we analyze. As a result, we have the following inflation rate of Croatia : 
+
+```{r}
+fit_inf <- infl_ts %>% 
+  model(
+    Linear = TSLM(Infaltion ~ trend()),
+    `2nd Order` = TSLM(Infaltion ~ trend() + I(trend()^2)),
+    `3rd Order` = TSLM(Infaltion ~ trend() + I(trend()^2) + I(trend()^3)),
+    `4th Order` = TSLM(Infaltion ~ trend() + I(trend()^2) + I(trend()^3) + I(trend()^4)))
+
+fore_infl1 <- fit_inf %>% 
+  forecast(h = '1 years')
+
+infl_ts %>% 
+  autoplot(Infaltion) + 
+  geom_line(data = fitted(fit_inf),
+            aes(y = .fitted, color = .model)) + 
+  autolayer(fore_infl1, alpha = 0.5, level = 95) + 
+  labs(title = expression(underline('Inflation Rate Smoothing models')),
+       subtitle = '1991 - 2020',
+       x = 'Period of Time',
+       y = 'Inflation Rate') + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+
+Furthermore, for GDP per capita, we have the following : 
+
+```{r}
+fit_gdp <- gdp_ts %>% 
+  model(
+    Linear = TSLM(GDP ~ trend()),
+    `2nd Order` = TSLM(GDP ~ trend() + I(trend()^2)),
+    `3rd Order` = TSLM(GDP ~ trend() + I(trend()^2) + I(trend()^3)),
+    `4th Order` = TSLM(GDP ~ trend() + I(trend()^2) + I(trend()^3) + I(trend()^4)))
+
+fore_gdp1 <- fit_gdp %>% 
+  forecast(h = '1 years')
+
+gdp_ts %>% 
+  autoplot(GDP) + 
+  geom_line(data = fitted(fit_gdp),
+            aes(y = .fitted, color = .model)) + 
+  autolayer(fore_gdp1, alpha = 0.5, level = 95) + 
+  labs(title = expression(underline('GDP per capita Smoothing models')),
+       subtitle = '1991 - 2020',
+       x = 'Period of Time',
+       y = 'GDP per Capita') + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+Finally, we have the GINI index variable as follows : 
+
+```{r}
+fit_gini <- gini_ts %>% 
+  model(
+    Linear = TSLM(GINI ~ trend()),
+    `2nd Order` = TSLM(GINI ~ trend() + I(trend()^2)),
+    `3rd Order` = TSLM(GINI ~ trend() + I(trend()^2) + I(trend()^3)),
+    `4th Order` = TSLM(GINI ~ trend() + I(trend()^2) + I(trend()^3) + I(trend()^4)))
+
+fore_gini1 <- fit_gini %>% 
+  forecast(h = '1 years')
+
+gini_ts %>% 
+  autoplot(GINI) + 
+  geom_line(data = fitted(fit_gini),
+            aes(y = .fitted, color = .model)) + 
+  autolayer(fore_gini1, alpha = 0.5, level = 95) + 
+  labs(title = expression(underline('Gini index Smoothing models')),
+       subtitle = '1991 - 2020',
+       x = 'Period of Time',
+       y = 'GINI index') + 
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+
+### 3) Present the trend-cycle of the series by one of the following options:
+###  - With substitution or division of the trend
+###  - Apply the moving average plot to show the cycle of the series.
+
+As for this third question here, we are going to apply the moving average for each one of the data provided and present our findings with the help of the autoplot function. We choose to continue with the exact same turn of each dataset. Hence for the unemployment we have 30 different data points. We are going to compute the moving average of the moving average in order to have symmetry around the mean. Initially, we are going to present, a plot with raw data, as well as the moving average with different steps. Later on, we are going to select on of them and proceed by calculating and presenting the moving average of the moving average as described earlier.
+
+```{r, warning= FALSE}
+colors <- c('Raw' = 'black', '3-MA' = 'red', '4-MA' = 'green', '5-MA' = 'blue', '6-MA' = 'yellow', '7-MA' = 'brown')
+
+unemp_ts %>% 
+  mutate(
+    `3-MA` = slide_dbl(Unemployment, mean,
+                       .before = 1, .after = 1, .complete = TRUE),
+    `5-MA` = slide_dbl(Unemployment, mean,
+                       .before = 2, .after = 2, .complete = TRUE),
+    `7-MA` = slide_dbl(Unemployment, mean,
+                         .before = 3, .after = 3, .complete = TRUE),
+    `4-MA` = slide_dbl(Unemployment, mean,
+                       .start = 2, .after = 1, .complete = TRUE),
+    `6-MA` = slide_dbl(Unemployment, mean,
+                       .start = 3, .after = 2, .complete = TRUE),
+     ) %>% 
+  autoplot() + 
+  geom_line(aes(y = `5-MA`, color = '5-MA')) + 
+  geom_line(aes(y = `3-MA`, color = '3-MA')) + 
+  geom_line(aes(y = `7-MA`, color = '7-MA')) +
+  geom_line(aes(y = `4-MA`, color = '4-MA')) +
+  geom_line(aes(y = `6-MA`, color = '6-MA'))
+  labs(title = expression(underline('Unemployment of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'Unemployment, total (% of total labor force)',
+       color = "Legend") +
+  scale_color_manual(values = colors) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+
+
+
+```{r, warning = FALSE}
+colors <- c('Raw' = 'black', '3-MA' = 'red', '4-MA' = 'green', '5-MA' = 'blue', '6-MA' = 'yellow', '7-MA' = 'brown')
+
+infl_ts %>% 
+  mutate(
+    `3-MA` = slide_dbl(Infaltion, mean,
+                       .before = 1, .after = 1, .complete = TRUE),
+    `5-MA` = slide_dbl(Infaltion, mean,
+                       .before = 2, .after = 2, .complete = TRUE),
+    `7-MA` = slide_dbl(Infaltion, mean,
+                         .before = 3, .after = 3, .complete = TRUE),
+    `4-MA` = slide_dbl(Infaltion, mean,
+                       .start = 2, .after = 1, .complete = TRUE),
+    `6-MA` = slide_dbl(Infaltion, mean,
+                       .start = 3, .after = 2, .complete = TRUE)
+  ) %>% 
+  autoplot() + 
+  geom_line(aes(y = `5-MA`, color = '5-MA')) + 
+  geom_line(aes(y = `3-MA`, color = '3-MA')) + 
+  geom_line(aes(y = `7-MA`, color = '7-MA')) +
+  geom_line(aes(y = `4-MA`, color = '4-MA')) +
+  geom_line(aes(y = `6-MA`, color = '6-MA')) +
+  labs(title = expression(underline('Infaltion of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'Infaltion',
+       color = "Legend") +
+  scale_color_manual(values = colors) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+
+
+
+```{r, warning= FALSE}
+colors <- c('Raw' = 'black', '3-MA' = 'red', '4-MA' = 'green', '5-MA' = 'blue', '6-MA' = 'yellow', '7-MA' = 'brown')
+
+gdp_ts %>% 
+  mutate(
+    `3-MA` = slide_dbl(GDP, mean,
+                       .before = 1, .after = 1, .complete = TRUE),
+    `5-MA` = slide_dbl(GDP, mean,
+                       .before = 2, .after = 2, .complete = TRUE),
+    `7-MA` = slide_dbl(GDP, mean,
+                         .before = 3, .after = 3, .complete = TRUE),
+    `4-MA` = slide_dbl(GDP, mean,
+                       .start = 2, .after = 1, .complete = TRUE),
+    `6-MA` = slide_dbl(GDP, mean,
+                       .start = 3, .after = 2, .complete = TRUE)
+  ) %>% 
+  autoplot() + 
+  geom_line(aes(y = `5-MA`, color = '5-MA')) + 
+  geom_line(aes(y = `3-MA`, color = '3-MA')) + 
+  geom_line(aes(y = `7-MA`, color = '7-MA')) +
+  geom_line(aes(y = `4-MA`, color = '4-MA')) +
+  geom_line(aes(y = `6-MA`, color = '6-MA')) +
+  labs(title = expression(underline('GDP per Capita of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'GDP per capita',
+       color = "Legend") +
+  scale_color_manual(values = colors) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+
+```{r, warning = FALSE}
+colors <- c('Raw' = 'black', '3-MA' = 'red', '4-MA' = 'green', '5-MA' = 'blue', '6-MA' = 'yellow', '7-MA' = 'brown')
+
+gini_ts %>% 
+  mutate(
+    `3-MA` = slide_dbl(GINI, mean,
+                       .before = 1, .after = 1, .complete = TRUE),
+    `5-MA` = slide_dbl(GINI, mean,
+                       .before = 2, .after = 2, .complete = TRUE),
+    `7-MA` = slide_dbl(GINI, mean,
+                         .before = 3, .after = 3, .complete = TRUE),
+    `4-MA` = slide_dbl(GINI, mean,
+                       .start = 2, .after = 1, .complete = TRUE),
+    `6-MA` = slide_dbl(GINI, mean,
+                       .start = 3, .after = 2, .complete = TRUE)
+  ) %>% 
+  autoplot() + 
+  geom_line(aes(y = `5-MA`, color = '5-MA')) + 
+  geom_line(aes(y = `3-MA`, color = '3-MA')) + 
+  geom_line(aes(y = `7-MA`, color = '7-MA')) +
+  geom_line(aes(y = `4-MA`, color = '4-MA')) +
+  geom_line(aes(y = `6-MA`, color = '6-MA')) +
+  labs(title = expression(underline('GINI index of Croatia')),
+       subtitle = '1991-2020',
+       x = 'Period of time',
+       y = 'GINI',
+       color = "Legend") +
+  scale_color_manual(values = colors) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.subtitle = element_text(hjust = 0.5))
+```
+
+
+
+```{r}
+unemp_ts %>% 
+  mutate(
+    Unemp_7MA = slide_dbl(Unemployment, mean,
+                         .before = 3, .after = 3, .complete = TRUE))
+
+infl_ts %>% 
+  mutate(
+    Infl_7MA = slide_dbl(Infaltion, mean,
+                         .before = 3, .after = 3, .complete = TRUE))
+
+gdp_ts %>% 
+  mutate(
+    GDP_7MA = slide_dbl(GDP, mean, 
+                       .before = 3, .after = 3, .complet = TRUE))
+
+gini_ts %>% 
+  mutate(
+    Gini_7MA = slide_dbl(GINI, mean,
+                       .before = 3, .after = 3, .complete = TRUE)
+  )
+
+range(unemp_ts$Year) ; range(infl_ts$Year) ; range(gdp_ts$Year) ; range(gini_ts$Year)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
