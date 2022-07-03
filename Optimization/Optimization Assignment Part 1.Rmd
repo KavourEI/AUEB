@@ -572,3 +572,50 @@ and the optimal value for the objective function is :
 result$objval
 ```
 
+Moving forward, the dual problem of the 
+
+$$
+\begin{aligned}
+& \text{maximize}
+& & 6x_1 +4x_2 +7x_3 +5x_4 \\
+& \text{subject to}
+& & x_1 +2x_2 + x_3 +2x_4 \leq 20 \\
+&&& 6x_1 +5x_2 +3x_3 +2x_4 \leq 100 \\
+&&& 3x_1 +4x_2 +9x_3 +12x_4 \leq 75 \\
+&&& x_1,x_2,x_3,x_4 \geq 0
+\end{aligned}
+$$
+is the following 
+
+$$
+\begin{aligned}
+& \text{minimize}
+& & 20y_1 + 100y_2 +75y_3 \\
+& \text{subject to}
+& & y_1 + 6y_2 + 3y_3  \geq 6 \\
+&&& 2y_1 + 5y_2 + 4y_3 \geq 4 \\
+&&& y_1 + 3y_2 + 9y_3 \geq 7 \\
+&&& 2y_1 + 2y_2 + 12y_3 \geq 5 \\
+&&& y_1,y_2,y_3 \geq 0
+\end{aligned}
+$$
+In order to solve the dual problem we are going to follow the exact same steps as we did for the primal. Meaning, 
+
+```{r}
+f.obj <- c(20,100,75)
+f.con <- matrix(c(1,6,3,2,5,4,1,3,9,2,2,12,1,0,0,0,1,0,0,0,1), nrow = 7, byrow = TRUE)
+f.dir <- c(">=",">=",">=",">=",">=",">=",">=")
+f.rhs <- c(6,4,7,5,0,0,0)
+
+result <- lp("min",f.obj,f.con, f.dir,f.rhs)
+```
+
+The optimal solution  of the dual is the $(y_1^*, y_2^*, y_3^*)$ :
+```{r}
+result$solution
+```
+
+and the optimal value for the objective function is :
+```{r}
+result$objval
+```
