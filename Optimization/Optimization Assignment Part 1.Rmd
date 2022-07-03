@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(latex2exp)
+library(lpSolve)
+library(lpSolveAPI)
 ```
 
 ### \underline{Exercise 1}:
@@ -164,8 +166,8 @@ So function $f$ has one critical point $(x^*,y^*)=(\frac{1}{2},0)$. Moving forwa
 
 $$
 \begin{bmatrix}
-\frac{\partial f}{\partial^2x}(x,y) & \frac{\partial f}{\partial x\partial y}(x,y)\\
-\frac{\partial f}{\partial y\partial x}(x,y) & \frac{\partial f}{\partial^2y}(x,y)
+\partial_{x^2}^2f(x,y) & \partial_{xy}^2f(x,y)\\
+\partial_{yx}^2f(x,y) & \partial_{y^2}^2f(x,y)
 \end{bmatrix} = \begin{bmatrix}
 2 & 0 \\
 0 & 4
@@ -212,8 +214,8 @@ On the other hand, let's assume that $x=3$, then we can see that $y = 3$. By tho
 
 $$
 H(x^*,y^*)=\begin{vmatrix}
-\partial^2_x g(x^*,y^*) & \partial_{xy}g(x^*,y^*) \\
-\partial_{yx}g(x^*,y^*) & \partial^2_y g(x^*,y^*)
+\partial^2_{x^2} g(x^*,y^*) & \partial_{xy}^2g(x^*,y^*) \\
+\partial_{yx}^2g(x^*,y^*) & \partial^2_{y^2} g(x^*,y^*)
 \end{vmatrix}=
 \begin{vmatrix}
 6x^* & -9 \\
@@ -282,8 +284,8 @@ Which is a not possible result. In order to continue and describe the kind of th
 
 $$
 H(x^*,y^*)=\begin{vmatrix}
-\partial^2_xh(x^*,y^*) & \partial_{xy}h(x^*,y^*)\\
-\partial_{yx}h(x^*,y^*) & \partial^2_yh(x^*,y^*)
+\partial^2_{x^2}h(x^*,y^*) & \partial_{xy}^2h(x^*,y^*)\\
+\partial_{yx}^2h(x^*,y^*) & \partial^2_{y^2}h(x^*,y^*)
 \end{vmatrix} = \begin{vmatrix}
 12x-6y & -6x \\
 -6x & 6y
@@ -320,7 +322,253 @@ Again as the previous critical point we see that the determinant of $H(x_2^*,y_2
 
 ### \underline{Exercise 3}:
 
-Find all the 
+Find all the extreme values of the functions
 
+  a. $f(x,y,z)=x^2+y^2+z^2+4yz$ under the constraint that $x+y+z=0$ and $x+y=1$ with the method of Lagrange multipliers \
+  b. $f(x_1,x_2,x_3)=2x_1^2-3x_1x_2+x_2^2+x_1x_3-2x_2x_3+3x_3^2$ under the constraint that $x_1+x_2-x_3 = 0$
+
+
+Figure out if the point is minimal, maximal or a saddle point.
 
 ### \underline{Solution}:
+
+  Lagrange multipliers are used to help us solve constrained optimization problems, as we have to face in this exercise. The basic structure of a Lagrange multiplier problem with one constraint and two variables $x,y$ is the following:
+  
+$$
+\mathcal{L}(x,y;\lambda) = f(x,y) + \lambda g(x,y)
+$$
+
+where $f(x,y)$ is the function to optimize under the constraint $g(x,y)$, and $\lambda$ is the Lagrange multiplier. In the next step, we set $\nabla\mathcal{L}=\nabla f +\lambda\nabla g=0$ to solve the resulting system of equations.
+In our case we have the following:
+
+$$
+\mathcal{L}(x,y,z;\lambda_1,\lambda_2) = f(x,y,z) + \lambda_1 g_1(x,y,z) +\lambda_2g_2(x,y,z)\Leftrightarrow
+$$
+$$
+\mathcal{L}(x,y,z;\lambda_1,\lambda_2) = x^2+y^2+z^2+4yz +\lambda_1(x+y+z) +\lambda_2(x+y-1)
+$$
+
+The partial derivatives of the Lagrange 
+
+$$
+\nabla\mathcal{L}(x,y,z;\lambda_1,\lambda_2) = \nabla f(x,y,z) = \lambda_1 \nabla g_1(x,y,z) + \lambda_2 \nabla g_2(x,y,z)
+$$
+results in the following system of equations
+
+$$
+\begin{cases}
+  \nabla_x \mathcal{L}=0 \\
+  \nabla_y \mathcal{L}=0 \\
+  \nabla_z \mathcal{L}=0 \\
+  g_1(x,y,z)=0 \\
+  g_2(x,y,z)=0
+\end{cases} \Rightarrow \begin{cases}
+  2x+\lambda_1+\lambda_2=0 \\
+  2y+4z+\lambda_1+\lambda_2=0 \\
+  2z+4y+\lambda_1 = 0 \\
+  x+y+z=0\\
+  x+y-1=0
+\end{cases} \Rightarrow 
+$$
+$$
+\begin{cases}
+\lambda_2=-2x-2z-4y\\
+2y+4z+\lambda_1+\lambda_2=0\\
+\lambda_1=-2z-4y\\
+x+y+z=0\\
+x+y=1
+\end{cases}
+$$
+
+combining the first three equations, we end up 
+
+$$
+\begin{cases}
+-6y-2x=0 \\
+x+y+z=0 \\
+x+y=1
+\end{cases}
+$$
+By solving the last system of equations we end up in the solution
+
+$$
+(x^*,y^*,z^* )= (\frac{3}{2}, -\frac{1}{2},-1)
+$$
+
+In order to figure out whether this point is minimum, maximum or a saddle point, we can use the determinant of the Hessian matrix. 
+
+$$
+H(x^*,y^*,z^*) = \begin{bmatrix}
+\partial_{x^2}^2f & \partial_{xy}^2f & \partial_{xz}^2f\\
+\partial_{yx}^2f & \partial_{y^2}^2f & \partial_{yz}^2f \\
+\partial_{zx}^2f & \partial_{zy}^2f & \partial_{z^2}^2f \\
+\end{bmatrix}
+$$
+
+We already, have calculated that:
+
+$$
+\partial_x(f)(x,y,z) = 2x,\quad \partial\partial_y(f)(x,y,z) = 2y+4z,\quad \partial\partial_z(f)(x,y,z) = 2z+4y
+$$
+
+Moving forward we have that: 
+
+$$
+|H(x^*,y^*,z^*)| = \begin{vmatrix}
+2 & 0 & 0\\
+0 & 2 & 4 \\
+0 & 4 & 2 \\
+\end{vmatrix}
+$$
+
+All we now to do is to calculate all the upper-left determinants. We can see that the first argument at posision $1\times1$ is $2>0$. Then as a second step, we need to check the determinant of the submatrix $H_{2\times2}\subset H_{3\times3}$. Hence we see that 
+
+$$
+\begin{vmatrix}
+2 & 0 \\
+0 & 2
+\end{vmatrix} = 2\cdot 2 -0\cdot 0 = 4 >0
+$$
+
+We see that the determinant is positive as well. Finally, we have that
+
+$$
+|H(x^*,y^*,z^*)| = \begin{vmatrix}
+2 & 0 & 0\\
+0 & 2 & 4 \\
+0 & 4 & 2 \\
+\end{vmatrix} = 
+$$
+$$
+2\cdot2\cdot2+0\cdot4\cdot0+0\cdot0\cdot4-0\cdot2\cdot0-4\cdot4\cdot2-2\cdot0\cdot0=4-32 =-28<0
+$$
+
+As we see, the determinant of the full Hessian matrix is negative. This implies that the Hessian matrix is negative definite and as a result, the point is maximum.
+
+Moving forward to the second part of the exercise we have the following constrained problem.
+
+$$
+2x_1^2 − 3x_1x_2 + x_2^2 +x_1x_3 − 2x_2x_3 +3x_3^2
+$$
+under the constraint
+$$
+x_1 +x_2 −x_3 =0
+$$
+
+Again we need to solve the system of equations created by the partial derivated using the lgrange multipliers.
+
+$$
+\mathcal{L}(x_1,x_2,x_3) = \nabla f(x_1,x_2,x_3) + \lambda \nabla g(x_1,x_2,x_3)
+$$
+
+$$
+\begin{cases}
+4x_1 - 3x_2 + x_3 + \lambda = 0 \\
+-3x_1 + 2x_2-2x_3 + \lambda = 0 \\
+x_1 - 2x_2 + 6x_3 - \lambda = 0 \\
+x_1 + x_2 - x_3 = 0
+\end{cases}
+$$
+
+The steps toward the solution of this system of equations is the following. From the third equation we have that $\lambda = x_1-2x_2+6x_3$ and by place this in the first two equations we have the following system of equations:
+
+$$
+\begin{cases}
+5x_1-5x_2+7x_3=0 \\
+-2x_1+4x_3=0 \\
+x_1 + x_2 - x_3 = 0
+\end{cases}
+$$
+
+With the help of the last equation we have that $x_3 = x_1 + x_2$ and by placing this in the other two equations we have that $x_1 = -2x_2$ and as a result, $x_3 = -x_2$. Show by combining all those findings with the first equation we have that
+
+$$
+(x^*,x_2^*,x_3^*) = (0,0,0)
+$$
+Once again we are going to use the Hessian matrix to decide if this point is maximum, minimum or saddle point. The Hessian Matrix is the 
+
+$$
+H(x_1,x_2,x_3)=\begin{bmatrix}
+4 & -3 & 1 \\
+-3 & 2 & -2 \\
+1 & -2 & 6 
+\end{bmatrix}
+$$
+We observe that
+
+$$
+4>0
+$$
+$$
+\begin{vmatrix}
+4 & -3 \\
+-3 & 2
+\end{vmatrix} = 4\cdot2 - (-3)\cdot(-3)= 8 - 9 = -1 <0
+$$
+
+and finally 
+
+$$
+\begin{vmatrix}
+4 & -3 & 1 \\
+-3 & 2 &-2 \\
+1 & -2 & 6
+\end{vmatrix} = 
+$$
+$$
+4\cdot2\cdot6 + (-3)\cdot(-2)\cdot1 + 1(-3)\cdot(-2) - 1\cdot2\cdot1 -  (-2)\cdot(-2)\cdot4 -6\cdot(-3)\cdot(-3)
+$$
+
+$$
+48 + 6 +6 - 2 -16 -54 = -12 < 0
+$$
+
+As we have seen, the Hessian matrix is negative definite and as a result, we can say that the point 
+$$
+(x_1^*,x_2^*,x_3^*)=(0,0,0)
+$$
+
+is a maximum.
+
+******
+
+### \underline{Exercise 4}:
+
+Assume you have the following constrained problem:
+
+$$
+\begin{aligned}
+& \text{maximize}
+& & 6x_1 +4x_2 +7x_3 +5x_4 \\
+& \text{subject to}
+& & x_1 +2x_2 + x_3 +2x_4 \leq 20 \\
+&&& 6x_1 +5x_2 +3x_3 +2x_4 \leq 100 \\
+&&& 3x_1 +4x_2 +9x_3 +12x_4 \leq 75 \\
+&&& x_1,x_2,x_3,x_4 \geq 0
+\end{aligned}
+$$
+
+  a. Solve the problem (by using R-Programming Language)
+  b. Write the dual problem and solve it as well.
+  
+### \underline{Solution}:
+
+```{r}
+f.obj <- c(6,4,7,5)
+f.con <- matrix(c(1,2,1,2,6,5,3,2,3,4,9,12,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1), nrow = 7, byrow = TRUE)
+f.dir <- c("<=","<=","<=",">=",">=",">=",">=")
+f.rhs <- c(20,100,75,0,0,0,0)
+
+result <- lp("max",f.obj,f.con, f.dir,f.rhs)
+```
+
+The optimal solution $(x_1^*, x_2^*, x_3^*, x_4^*)$ :
+```{r}
+result$solution
+```
+
+and the optimal value for the objective function is :
+```{r}
+result$objval
+```
+
