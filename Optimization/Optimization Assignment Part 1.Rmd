@@ -4,7 +4,8 @@ author: "Efthymios Ioannis Kavour"
 date: '2022-06-24'
 output: 
   pdf_document: 
-    latex_engine: lualatex
+    latex_engine: xelatex
+    extra_dependencies: ["mathtools"]
 ---
 
 ```{r setup, include=FALSE}
@@ -650,8 +651,8 @@ $$
 &&& 2y_1 + 2y_2 + 12y_3 \geq 5 \\
 &&& y_1,y_2,y_3 \geq 0
 \end{aligned}
-$$ In order to solve the dual problem we are going to follow the exact
-same steps as we did for the primal. Meaning,
+$$ 
+In order to solve the dual problem we are going to follow the exact same steps as we did for the primal. Meaning,
 
 ```{r}
 f.obj <- c(20,100,75)
@@ -686,7 +687,6 @@ figures are given in the following table. The company also considers
 that the market can contain two practically unlimited quantities of the
 products at the selling prices shown in the table.
 
-
 $$
 \begin{tabular}{ |p{2cm}|p{2cm}|p{2cm}||p{2cm}|p{2cm}|p{2cm}|  } \hline
   Product & Price & Production Cost & \multicolumn{3}{|c|}{Wokring Hours per Sector} \\ \hline
@@ -696,24 +696,152 @@ $$
   $P_2$ & 110 & 80 & 0.3 & 0.4 & 0.1 \\ \hline
   \multicolumn{3}{|c|}{Available Working Hours} & 1800 & 1000 & 700 \\ \hline
 \end{tabular}
-$$
-$$
+$$ $$
 \textit{Production Plan's Data}
 $$
 
-
 In addition, the company must take into account the following data
 
-  1. The company's available funds for the next quarter are €300,000.
-  2. The bank grants a loan of up to €200,000 for three months with an interest rate of 5% per quarter, as long as the degree of immediate liquidity of the company, i.e. the ratio
-  
+1.  The company's available funds for the next quarter are €300,000.
+2.  The bank grants a loan of up to €200,000 for three months with an
+    interest rate of 5% per quarter, as long as the degree of immediate
+    liquidity of the company, i.e. the ratio
+
 $$
-\frac{\text{Available Funds} + $\text{Accounts Receivable}}{\text{Accounts Payable}}
+\frac{\text{Available Funds} + \text{Accounts Receivable}}{\text{Accounts Payable}}
 $$
 
-is at least 3 to 1 during the entire period in which the loan remains outstanding.
-  3. Payments for wages and materials are made at the end of the production period (the quarter) and therefore any credit needed is secured at that point in time. The products are shipped on credit at the end of the production period and finally the settlement of the accounts, i.e. the revenue after the sale and the payments for the outstanding liabilities are made at the end of the next period.
-  
-Formulate a linear programming model for the situation described above and solve it computationally using R-programming language.
+is at least 3 to 1 during the entire period in which the loan remains
+outstanding. 3. Payments for wages and materials are made at the end of
+the production period (the quarter) and therefore any credit needed is
+secured at that point in time. The products are shipped on credit at the
+end of the production period and finally the settlement of the accounts,
+i.e. the revenue after the sale and the payments for the outstanding
+liabilities are made at the end of the next period.
+
+Formulate a linear programming model for the situation described above
+and solve it computationally using R-programming language.
 
 ### \underline{Solution}:
+
+AS we already know the company AB tries to maximize its profit so the
+objective function of the problem is going to be
+
+$$
+max\quad \text{Profit}
+$$
+
+under some constraints. Before going to the analysis of the constraints,
+we need to look a bit deeper in the term Profit. By definition, Profit
+is defined as Income - Outcome. Let's assume that 
+
+$$
+\begin{aligned}
+x_1 := \text{Number of Product 1 items produced}\\
+x_2 := \text{Number of Product 2 items produced}
+\end{aligned}
+$$
+
+Now we can write that as income, we are going to have all the items sold of the produced products times their price. So we can say that
+
+$$
+\text{Income} = x_1\cdot 140 + x_2\cdot 110
+$$
+
+On the other hand as Output we shall define all the money that company AB needs to pay in order to produce $x_1$ and $x_2$. We can see from the table provided above that the cost of production for one unit of $x_1$ and $x_2$ is 180 (100 for $x_1$ and 80 for $x_2$). The problem here is that in order to produce one unit of each product, apart form the money that needs to be spent, there is some amount of time needed. Initially, let us assume that:
+
+$$
+\begin{aligned}
+w_ij := \text{Hours to be spent by sector } j \text{ to produce product } i\quad \forall\ i\in \{1,2\},\ j\in\{1,2,3\}
+\end{aligned}
+$$
+
+If we take a quick look at the table above, we can see that in order to produce one unit of product $P_1$ we need
+
+$$
+x_1 = 0.5\cdot w_{11} + 0.3\cdot w_{12} + 0.3\cdot w_{13}
+$$
+
+and for $P_2$ we are going to need
+
+$$
+x_2 = 0.3\cdot w_{21} + 0.4\cdot w_{22} + 0.1\cdot w_{23}
+$$
+
+Though this may seem complete, we can also see that there is an upper bound for the hours a sector can be productive in the three month period that company considers as production period. We can describe this upper bound as
+
+$$
+\begin{aligned}
+& w_{11} + w_{21} \leq 1800\\
+& w_{12} + w_{22} \leq 1000\\
+& w_{13} + w_{23} \leq 700 
+\end{aligned}
+$$
+
+Combining all that information as well as the information given after the table we are going to end up in the following maximal problem
+
+$$
+\begin{aligned}
+& \text{maximum}
+& & 140x_1 + 110x_2 - (100x_1 + 80x_2)\\
+& \text{subject to}
+& & x_1 = 0.5w_{11} + 0.3w_{12} + 0.3w_{13}\\
+&&& x_2 = 0.3w_{21} + 0.4w_{22} + 0.1w_{23}\\
+&&& w_{11} + w_{21} \leq 1800\\
+&&& w_{12} + w_{22} \leq 1000\\
+&&& w_{13} + w_{23} \leq 700\\
+&&& 3000 + 140x_1 + 110x_2 \geq 3(100x_1 + 80x_2)\\
+&&& 100x_1 + 80x_2 \leq 500000 \\
+&&& w_{ij} > 0 \quad \forall\ i,j
+\end{aligned}
+$$ 
+and if we make all the calculations we have the following form of the maximization problem
+
+$$
+\begin{aligned}
+& \text{maximum}
+& & 20w_{11} + 12w_{12} + 12w_{13} + 9w_{21} + 12w_{22} + 3w_{23} - 210000\\
+& \text{subject to}
+&& w_{11} + w_{21} \leq 1800\\
+&&& w_{12} + w_{22} \leq 1000\\
+&&& w_{13} + w_{23} \leq 700\\
+&&& 3000 -80w_{11} - 48w_{12} - 48w_{13} - 39w_{21} -52w_{22} - 13w_{23} \geq  0\\
+&&& 50w_{11} + 30w_{12} + 30w_{13} + 24w_{21} + 32w_{22} + 8w_{23} \leq 500000 \\
+&&& w_{ij} > 0 \quad \forall\ i,j
+\end{aligned}
+$$
+
+```{r}
+f.obj <- c(20,12,12,9,12,3)
+f.con <- matrix(c(1,0,0,1,0,0,
+                  0,1,0,0,1,0,
+                  0,0,1,0,0,1,
+                  1,1,1,1,1,1,
+                  1,1,1,1,1,1,
+                  1,0,0,0,0,0,
+                  0,1,0,0,0,0,
+                  0,0,1,0,0,0,
+                  0,0,0,1,0,0,
+                  0,0,0,0,1,0,
+                  0,0,0,0,0,1), nrow = 11, byrow = TRUE)
+f.dir <- c("<=","<=","<=",">=","<=",">",">",">",">",">",">")
+f.rhs <- c(1800,1000,700,0,500000,0,0,0,0,0,0)
+
+result <- lp("max",f.obj,f.con, f.dir,f.rhs)
+```
+
+The result that we are going to acquire from the constrained problem we created above is the amount that company is going to make. Don't forget that Company AB needs to repay the loan acquired from the bank, so in order to find the final profit we need to substract the loan + the interest (meaning 210000). With no further do, the maximum profit is acquired when working the following amount of hours (per sector)
+```{r}
+result$solution
+```
+
+As we can see it is not wise to produce product $P_2$. This strategy will give company the amount of
+```{r}
+result$objval
+```
+
+When giving the money back to the bank, company AB is left with
+
+```{r}
+result$objval-210000
+```
