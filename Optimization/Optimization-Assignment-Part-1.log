@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.7.4)  5 JUL 2022 22:32
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.7.4)  6 JUL 2022 23:48
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -762,22 +762,17 @@ Underfull \hbox (badness 10000) in paragraph at lines 850--850
 []\TU/lmr/m/n/10 Production
  []
 
-[10]
-Overfull \hbox (183.43613pt too wide) detected at line 972
-[][]
- []
-
-[11] [12] (./Optimization-Assignment-Part-1.aux)
+[10] [11] [12] [13] (./Optimization-Assignment-Part-1.aux)
 Package rerunfilecheck Info: File `Optimization-Assignment-Part-1.out' has not changed.
 (rerunfilecheck)             Checksum: 06F212647B8E3E9603852D6B6526162C;492.
  ) 
 Here is how much of TeX's memory you used:
  17453 strings out of 477856
  325045 string characters out of 5844888
- 801558 words of memory out of 5000000
+ 805558 words of memory out of 5000000
  38155 multiletter control sequences out of 15000+600000
  475710 words of font info for 81 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  86i,9n,121p,993b,413s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Optimization-Assignment-Part-1.pdf (12 pages).
+Output written on Optimization-Assignment-Part-1.pdf (13 pages).
