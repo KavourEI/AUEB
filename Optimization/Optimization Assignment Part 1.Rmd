@@ -19,7 +19,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(latex2exp)
 library(lpSolve)
-library(lpSolveAPI)
 ```
 
 ### \underline{Exercise 1}:
@@ -152,6 +151,9 @@ $$
 
 ### \underline{Exercise 2}:
 
+Correct the definite of the Hessian and the local information of the
+points\
+
 Find all the critical points and say whether they are local minimum,
 local maximum or saddle points, of the following functions:
 
@@ -261,8 +263,8 @@ H(0,0)= \begin{vmatrix}
 \end{vmatrix}=0\cdot0 -(-9)\cdot(-9)=-81 <0
 $$
 
-We ended up that $H(0,0)<0$ meaning that this is a local maximum poitn.
-Now let us move forward and chech the secotn critical point.
+We ended up that $H(0,0)<0$ meaning that this is a local maximum point.
+Now let us move forward and check the secont critical point.
 
 $$
 H(3,3)=\begin{vmatrix}
@@ -363,6 +365,8 @@ that the critical point is a local maximum as well.
 ------------------------------------------------------------------------
 
 ### \underline{Exercise 3}:
+
+Correct the $\lambda$'s sign to minus and correct the calculations
 
 Find all the extreme values of the functions
 
@@ -651,8 +655,8 @@ $$
 &&& 2y_1 + 2y_2 + 12y_3 \geq 5 \\
 &&& y_1,y_2,y_3 \geq 0
 \end{aligned}
-$$ 
-In order to solve the dual problem we are going to follow the exact same steps as we did for the primal. Meaning,
+$$ In order to solve the dual problem we are going to follow the exact
+same steps as we did for the primal. Meaning,
 
 ```{r}
 f.obj <- c(20,100,75)
@@ -724,26 +728,33 @@ and solve it computationally using R-programming language.
 
 ### \underline{Solution}:
 
+Assume that
 
-Assume that \par
+\par
 
-  - $n_1$ is the amount of product $P_1$ produced.
-  - $n_2$ is the amount of product $P_2$ produced.
-  - $x$ is the amount of loan that company will acquire from the bank.
-  
-The objective function that company AB is trying to maximize is the following,
+-   $n_1$ is the amount of product $P_1$ produced.
+-   $n_2$ is the amount of product $P_2$ produced.
+-   $x$ is the amount of loan that company will acquire from the bank.
+
+The objective function that company AB is trying to maximize is the
+following,
 
 $$
 max\quad 140n_1 + 110n_2 - 100n_1 - 80n_2 -\frac{105}{100}x
 $$
 
-What the function above tells us is that the company tries to maximize their Profit which is the amount of money obtained by their sells - the cost that they had to pay - the loan that they have to repay (plys the 5% interest). After making some adjastments, we can see that 
+What the function above tells us is that the company tries to maximize
+their Profit which is the amount of money obtained by their sells - the
+cost that they had to pay - the loan that they have to repay (plys the
+5% interest). After making some adjastments, we can see that
 
 $$
 max\quad 40n_1 + 30n_2 -\frac{105}{100}x
 $$
 
-But as you may have guessed, this can not be left with out some constraints. After, carefully reading the data given in the exercise, we end up in the following constrained linear problem.
+But as you may have guessed, this can not be left with out some
+constraints. After, carefully reading the data given in the exercise, we
+end up in the following constrained linear problem.
 
 $$
 \begin{aligned}
@@ -760,8 +771,19 @@ $$
 \end{aligned}
 $$
 
-Let us see, one by one, all the constraints. The first three inequalities are ones obtained with the help of the table. To be more specific those are the sector's available working hours. The fourth one is the cost constraint. Meaning that the company's, concerning the production of $P_1$ and $P_2$ can not overcome this amount. The fifth one is the constraint is one set by the bank in order to be able to obtain the loan, in case this is wise. Lastly, x is the constraint, the maximum amount of money the company can obtain by the bank. In the last line, we set the constraints that the minimum amount of $n_1$, $n_1$, $x$ can be 0 (non-negative). 
-
+Let us see, one by one, all the constraints. The first three
+inequalities are ones obtained with the help of the table. To be more
+specific those are the sector's available working hours. The fourth one
+is the cost constraint. Meaning that the company's, concerning the
+production of $P_1$ and $P_2$ can not overcome this amount. The fifth
+one is the constraint is one set by the bank in order to be able to
+obtain the loan, in case this is wise. Lastly, x is the constraint, the
+maximum amount of money the company can obtain by the bank. In the last
+line, we set the constraints that the minimum amount of $n_1$, $n_1$,
+$x$ can be 0 (non-negative). So in order to use R-Programming language
+in order to solve this problem, all we have to do is use the packages
+$\textit{lpSolve}$ and its functions in order to solve this constrained
+linear problem.
 
 ```{r}
 f.obj <- c(40,30,-105/100)
@@ -771,7 +793,54 @@ f.dir <- c("<=","<=","<=","<=","<=","<=",">=",">=",">=")
 f.rhs <- c(1800,1000,700,300000,300000,200000,0,0,0)
 
 result <- lp("max",f.obj,f.con,f.dir,f.rhs, all.int =TRUE)
-
-result$solution
-result$objval - result$solution[3]
 ```
+
+As a result, the solution is
+
+```{r}
+result$solution
+```
+
+As we have seen, the optimal solution is obtained when no loan is taken
+from the bank, according to this linear problem. We have obtained
+$(n_1^*,n_2^*,x^*)=(1875,0,0)$ as optimal solution. In order to
+interpret this result, we can say that, company AB will produce 1875
+units of product $P_1$, 0 units of $P_2$ by taking $0$ amount of loan
+from bank.
+
+\par
+
+```{r}
+result$objval
+```
+
+As we can see, the profit of the company by following the strategy
+proposed above, is going to be 75000.
+
+### \underline{Exercise 5}:
+
+Suppose we have €250,000 which we intend to invest in some of the
+additional investments. The following table describes the cash flows
+resulting from the investments.\
+
+|              |        |        |        |        |
+|:------------:|:------:|:------:|:------:|:------:|
+|              | Year 1 | Year 2 | Year 3 | Year 4 |
+| Investment 1 | -1.00  |        |  1.18  |        |
+| Investment 2 |        | -1.00  |        |  1.22  |
+| Investment 3 |        |        | -1.00  |  1.10  |
+| Investment 4 | -1.00  |  0.14  |  0.14  |  1.00  |
+| Investment 5 |        | -1.00  |  0.20  |  1.00  |
+
+: Cash Flows
+
+For example, if we invest €1 in Investment 1 at the beginning of the
+first year, we will get €1.18 at the beginning of the third year.
+Investment 2 is available at the beginning of second year and a return of 1.22 in the fourth year. Available funds that have not been placed in one of the investments at the beginning of a year can be placed in a term bank account with a return of 3% per annum. Any of 5 investment schemes requires an investment amount of at least €100,000.\
+
+Formulate the problem of optimal placement of the amount of money for
+the 4-year horizon as a Linear-Integer programming problem and solve it
+computationally (eg R).
+
+### \underline{Solution}:
+
