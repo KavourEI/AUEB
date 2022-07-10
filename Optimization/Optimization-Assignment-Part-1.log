@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.7.9)  9 JUL 2022 18:52
+This is XeTeX, Version 3.141592653-2.6-0.999994 (TeX Live 2022) (preloaded format=xelatex 2022.7.9)  10 JUL 2022 23:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -805,42 +805,37 @@ LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10> not available
 (Font)              Font shape `TU/lmtt/b/n' tried instead on input line 254.
 File: Optimization-Assignment-Part-1_files/figure-latex/unnamed-chunk-3-1.pdf Graphic file (type pdf)
 <use Optimization-Assignment-Part-1_files/figure-latex/unnamed-chunk-3-1.pdf>
-[2]
-Underfull \hbox (badness 10000) in paragraph at lines 276--278
+[2] [3] [4]
+Underfull \hbox (badness 10000) in paragraph at lines 498--501
 
  []
 
-[3] [4] [5]
-Underfull \hbox (badness 10000) in paragraph at lines 501--504
-
- []
-
-[6] [7] [8] [9]
-Underfull \hbox (badness 10000) in paragraph at lines 864--864
+[5] [6] [7] [8] [9]
+Underfull \hbox (badness 10000) in paragraph at lines 863--863
 []|\TU/lmr/m/n/10 Production
  []
 
 [10] [11]
-Underfull \hbox (badness 10000) in paragraph at lines 1018--1021
+Underfull \hbox (badness 10000) in paragraph at lines 1016--1019
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1035--1042
+Underfull \hbox (badness 10000) in paragraph at lines 1033--1040
 
  []
 
-[12] (./Optimization-Assignment-Part-1.aux)
+[12] [13] [14] (./Optimization-Assignment-Part-1.aux)
 Package rerunfilecheck Info: File `Optimization-Assignment-Part-1.out' has not changed.
-(rerunfilecheck)             Checksum: 4F319396920680631CE5B64D846FAA72;594.
+(rerunfilecheck)             Checksum: E0915F283B50B71021D1FC42BD57024B;543.
  ) 
 Here is how much of TeX's memory you used:
- 18074 strings out of 477844
- 334243 string characters out of 5844556
- 811948 words of memory out of 5000000
- 38771 multiletter control sequences out of 15000+600000
+ 18073 strings out of 477844
+ 334231 string characters out of 5844556
+ 815905 words of memory out of 5000000
+ 38770 multiletter control sequences out of 15000+600000
  475710 words of font info for 81 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 86i,9n,121p,993b,359s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 86i,9n,121p,993b,413s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Optimization-Assignment-Part-1.pdf (12 pages).
+Output written on Optimization-Assignment-Part-1.pdf (14 pages).

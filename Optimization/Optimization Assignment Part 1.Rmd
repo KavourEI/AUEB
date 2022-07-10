@@ -151,8 +151,7 @@ $$
 
 ### \underline{Exercise 2}:
 
-Correct the definite of the Hessian and the local information of the
-points\
+Positive/Negative Definite\
 
 Find all the critical points and say whether they are local minimum,
 local maximum or saddle points, of the following functions:
@@ -679,6 +678,8 @@ and the optimal value for the objective function is :
 result$objval
 ```
 
+------------------------------------------------------------------------
+
 ### \underline{Exercise 5}:
 
 In order for Company AB to start production of two products, $P_1$ and
@@ -700,7 +701,9 @@ $$
   $P_2$ & 110 & 80 & 0.3 & 0.4 & 0.1 \\ \hline
   \multicolumn{3}{|c|}{Available Working Hours} & 1800 & 1000 & 700 \\ \hline
 \end{tabular}
-$$ $$
+$$
+
+$$
 \textit{Production Plan's Data}
 $$
 
@@ -726,15 +729,13 @@ liabilities are made at the end of the next period.
 Formulate a linear programming model for the situation described above
 and solve it computationally using R-programming language.
 
-### \underline{Solution}:
+###\underline{Solution}:
 
 Assume that
 
-\par
-
--   $n_1$ is the amount of product $P_1$ produced.
--   $n_2$ is the amount of product $P_2$ produced.
--   $x$ is the amount of loan that company will acquire from the bank.
+  - $n_1$ is the amount of product $P_1$ produced.
+  - $n_2$ is the amount of product $P_2$ produced.
+  - $x$ is the amount of loan that company will acquire from the bank.
 
 The objective function that company AB is trying to maximize is the
 following,
@@ -808,8 +809,6 @@ interpret this result, we can say that, company AB will produce 1875
 units of product $P_1$, 0 units of $P_2$ by taking $0$ amount of loan
 from bank.
 
-\par
-
 ```{r}
 result$objval
 ```
@@ -817,7 +816,9 @@ result$objval
 As we can see, the profit of the company by following the strategy
 proposed above, is going to be 75000.
 
-### \underline{Exercise 5}:
+------------------------------------------------------------------------
+
+### \underline{Exercise 6}:
 
 Suppose we have €250,000 which we intend to invest in some of the
 additional investments. The following table describes the cash flows
@@ -840,7 +841,72 @@ Investment 2 is available at the beginning of second year and a return of 1.22 i
 
 Formulate the problem of optimal placement of the amount of money for
 the 4-year horizon as a Linear-Integer programming problem and solve it
-computationally (eg R).
+computationally (e.g. R).
 
 ### \underline{Solution}:
 
+In order to solve the problem, we need to define the following:
+
+  - $x_1$ : is the amount of money we give in the $\textit{first}$ investment plan in the $\textit{first}$ year.
+  - $x_2$ : is the amount of money we give in the $\textit{second}$ investment plan in the $\textit{second}$ year.
+  - $x_3$ : is the amount of money we give in the $\textit{third}$ investment plan in the $\textit{third}$ year.
+  - $x_4$ : is the amount of money we give in the $\textit{fourth}$ investment plan in the $\textit{first}$ year.
+  - $x_5$ : is the amount of money we give in the $\textit{fifth}$ investment plan in the $\textit{second}$ year.
+  - $x_6$ : is the amount of money we give in the bank in the $\textit{first}$ year.
+  - $x_7$ : is the amount of money we give in the bank in the $\textit{second}$ year.
+  - $x_8$ : is the amount of money we give in the bank in the $\textit{third}$ year.
+  
+The objective of this problem is to obtain at the end, the largest possible return of our initial funds. As a result, we need to 
+
+$$
+\begin{aligned}
+& \text{maximize}
+& & 1.18x_1 + 1.22x_2+1.10x_3+0.14^2x_4+0.2x_5+1.03x_8
+\end{aligned}
+$$
+
+But this has to be completed according to specific constraints. According to the data provided in the exercise, the full problem is going to be
+
+$$
+\begin{aligned}
+& \text{maximize}
+& & 1.18x_1 + 1.22x_2+1.10x_3+0.14^2x_4+0.2x_5+1.03x_8 \\
+& \text{subject to}
+& & x_1+x_4+x_6\geq250000\\
+&&& x_1+x_2+0.86x_4+x_5-0.03x_6+x_7\leq250000\\
+&&& -0.18x_1+x_2+x_3+0.9804x_4+0.8x_5+x_6+-0.03x_7+x_8\leq250000\\
+&&& x_1,\dots,x_8\geq0
+\end{aligned}
+$$
+
+The solution to the problem provided above, with the help of R-programming (and the package $\textit{lpSolve}$) the following:
+
+```{r}
+f.obj <- c(1.18,1.22,1.10,0.14^2,0.2,0,0,1.03)
+f.con <- matrix(c(1,0,0,0,0,0,0,0,
+                  0,1,0,0,0,0,0,0,
+                  0,0,1,0,0,0,0,0,
+                  0,0,0,1,0,0,0,0,
+                  0,0,0,0,1,0,0,0,
+                  0,0,0,0,0,1,0,0,
+                  0,0,0,0,0,0,1,0,
+                  0,0,0,0,0,0,0,1,
+                  1,0,0,1,0,1,0,0,
+                  1,1,0,0.86,1,-0.03,1,0,
+                  -0.18,1,1,0.9804,0.8,1,-0.03,1),
+                nrow = 11, byrow = TRUE)
+f.dir <- c(">=",">=",">=",">=",">=",">=",">=",">=","<=","<=","<=")
+f.rhs <- c(0,0,0,0,0,0,0,0,250000,250000,250000)
+
+result <- lp("max",f.obj,f.con,f.dir,f.rhs)
+```
+
+The optimal solution $(x_1^*,x_2^*,x_3^*,x_4^*,x_5^*,x_6^*,x_7^*,x_8^*)$
+```{r}
+result$solution
+```
+
+And the optimal amount of money that one should obtain by following the strategy provided above is
+```{r}
+result$objval
+```
