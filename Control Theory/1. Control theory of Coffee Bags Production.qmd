@@ -1,0 +1,295 @@
+---
+title: "Assignment II"
+subtitle: |
+  | Course : Quality Check and Control
+  | Athens University of Economics and Business
+author:
+  - name: Themis Kavour
+  
+format: 
+  pdf:
+    toc: true
+    toc-title: Contents
+    number-sections: true
+    colorlinks: true
+editor: visual
+output: pdf_document
+---
+\newpage
+
+# Introduction - The Production Line
+
+In this project, we are going to analyze the production line of coffee bags. Implement several flaws in the process and try to introduce several procedures that will help us identify those errors in this line of production in order to check the response of each and every mechanism built.
+
+# Libraries
+
+```{r, echo=FALSE}
+library(qcc)
+library(dplyr)
+```
+
+-   \textit{qcc} library will help us produce the charts we need to
+    indicated any kind of swifts
+    \textbf{mean}/\textbf{standard deviation}-related.
+
+# Mean Related Analysis
+
+In this part of the process we are going to set different adjustments
+for the values of mean of the productions line. Initially, we shall
+swift the mean value of the samples acquired by a small amount and use
+X-Bar Chart, and Cumulative Sum Chart (CUSUM) to see the pros and cons
+of both of them. Afterward, the same process is going to be repeated but
+for a much larger change.
+
+Before starting, though, we need to call the libraries that we are going
+to need in our analysis.
+
+## Samples
+
+Initially, we need to acquire samples from our production line in order
+to identify the mean value of samples ($\bar{\bar{X}}$) and its Upper
+and Lower Limits. We shall name this sample \textbf{scorrect}.
+\textbf{scorrect} will be consisted from 40 samples of 7 coffee bags per
+sample. Apart from that we will define the \textbf{ssmall} and
+\textbf{sbig} the samples with small and big swifts in mean,
+respectively that are going to be constructed from 20 samples of 7
+coffee bags as well. With no further do, we have :
+
+```{r}
+set.seed(29)
+scorrect <- rnorm(280, 250, 2)
+ssmall <- rnorm(140, 250.7, 2)
+sbig <- rnorm(140, 254, 2)
+
+small_imp <- c(scorrect,ssmall)
+big_imp <- c(scorrect,sbig)
+
+smat<-t(matrix(small_imp,nrow=7,ncol=60))
+bmat<-t(matrix(big_imp,nrow=7,ncol=60))
+```
+
+## Control Charts
+
+The swift that has been selected is 7 to the mean as it is the the exact
+amount in order to produce one extract single espresso. This would be a
+bad situation for the company, as to sell one extra cup of coffee per
+coffee bag. Let us use the $\bar{\bar{X}}$-Chart to check whether the
+swift is identifiable or not.
+
+```{r,}
+xbb1 <- qcc(smat[1:40,], type="xbar", newdata=smat[41:60,],plot = T)
+```
+
+As for the plot generated above, we can comment the fact that the swift
+has not been identified with a point out of bounds, though by getting
+such a plot, we should have the bells ring in the production line. This
+is due to the fact that there are many sample means gathered above the
+Central Line (\textit{CL}), and we can clearly identify a distribution
+pattern. Let us now, use CUSUM chart in order to see whether we are
+going to acquire better results from it.
+
+```{R}
+cs1 <- cusum(smat[1:40,], newdata=smat[41:60,],plot = TRUE)
+```
+
+We can see that CUSUM apart from the non-randomly distributed pattern,
+has managed to indicate to us a indicate to us a point out of bounds. To
+be more specific, there 5 points out of Upper Control Limit
+(\textit{UCL})
+
+```{r}
+cbind(`First Violation` = c("XBarBar" = NA, "CUSUM" = cs1$violations$upper[1]))
+```
+
+By using both of the methods, we have the same indications but it was
+managed by the CUSUM chart to find sample means out of bounds. This was
+done at the $54^{rd}$ sample. Finally, we are going to use Exponentially
+Weighted Moving Average (\textit{EWMA}) to check how this is going to
+react to the size of the swift that is implemented.
+
+```{r}
+ewma1 <- ewma(smat[1:40,], lambda=0.88, nsigmas=3, newdata=smat[41:60,],plot = TRUE)
+```
+
+```{r}
+cbind(`First Violation` = c("XBarBar" = NA, 
+                            "CUSUM" = cs1$violations$upper[1],
+                            "EWMA" = ewma1$violations[[1]]))
+```
+
+As we can see while using this plot, the small swift was identified at a
+sample earlier, sample number $53$. It was expected that a small swift,
+more possibly, would be identified by CUSUM and/or EWMA Charts rather
+than $\bar{\bar{X}}$-Chart.
+
+Moving forward to the big swift data. Initially, we shall plot
+$\bar{\bar{X}}$-Chart. to check how it shall react.
+
+```{r}
+xbb2 <- qcc(bmat[1:40,], type="xbar", newdata=bmat[41:60,],plot = T)
+```
+
+We can clearly see from the first sample that the mean has been swift.
+There is not much to comment to the plot above, as it is as clear as the
+ice, that the procedure is faulty.
+
+```{r}
+cs2 <- cusum(bmat[1:40,], newdata=bmat[41:60,],plot = TRUE)
+```
+
+```{r}
+ewma2 <- ewma(bmat[1:40,], lambda=0.88, nsigmas=3, newdata=bmat[41:60,],plot = TRUE)
+```
+
+Same apply to the comments produced above for CUSUM and EWMA Charts. We
+can clearly see the the procedure should be terminated in order to apply
+any modifications required.
+
+# Standard Deviation Related Analysis
+
+In this part of the analysis, we are going to keep mean at the same
+level within all the samples we are going to produce, but modify
+standard deviation, in order to see if such changes can be identified
+with the help of control theory methods. Initially, we're going to
+implement S chart as this is the chart that help us identify changes in
+standard deviation of the samples. Later on, we will use once again
+CUSUM Chart and EWMA Chart to check how they respond to such changes.
+Before getting to that point, we need to set the samples but we are
+going to work with.
+
+## Samples
+
+```{r}
+set.seed(30)
+ssmall_sd <- rnorm(140, 250, 2.4)
+sbig_sd <- rnorm(140, 250, 4)
+
+small_imp_sd <- c(scorrect,ssmall_sd)
+big_imp_sd <- c(scorrect,sbig_sd)
+
+smat_sd <- t(matrix(small_imp_sd,nrow=7,ncol=60))
+bmat_sd <- t(matrix(big_imp_sd,nrow=7,ncol=60))
+```
+
+## Control Charts
+
+Now that we have our data formatted, the way it is required by the
+package we use, we can start with S Chart and check how it's going to
+respond to the small change in standard deviation.
+
+```{r}
+sd1 <- qcc(smat_sd[1:40,], type="S", newdata=smat_sd[41:60,],plot = T)
+```
+
+We can clearly see that the change has been identified. There is one
+violations. This is in the $46^{th}$ sample ($6^{th}$ if we start set
+the numbering only for the new data imported) that appears to be above
+the UCL. Appart from that there are 5 concecutive samples above the CL
+that may have indicated to us that something is wrong even if this
+out-of-limits point was a bit lower. Let us now take a look to the other
+charts and see how those will respond to this small change.
+
+```{r}
+cs1_sd <- cusum(smat_sd[1:40,], newdata=smat_sd[41:60,],plot = TRUE)
+```
+
+```{r}
+ewma1_sd <- ewma(smat_sd[1:40,], lambda=0.88, nsigmas=3, newdata=smat_sd[41:60,],plot = TRUE)
+```
+
+As we can see this small change was not able to be identified by the
+CUSUM nor EWMA chart. Once again, we can see the sequence of points that
+appear to be in the same side of CL which indicates that the samples are
+not randomly distributed in both sides and probably there is something
+that we should take a closer look at.
+
+Now it is time to check the big swhift in standard deviation and the
+reaction of the plots to it.
+
+```{r}
+sd2 <- qcc(bmat_sd[1:40,], type="S", newdata=bmat_sd[41:60,],plot = T)
+```
+
+```{r}
+cs2_sd <- cusum(bmat_sd[1:40,], newdata=bmat_sd[41:60,],plot = TRUE)
+```
+
+```{r}
+ewma2_sd <- ewma(bmat_sd[1:40,], lambda=0.88, nsigmas=3, newdata=bmat_sd[41:60,],plot = TRUE)
+```
+
+When it comes to a greater change in standard deviation, all three
+charts manages to identify the change.
+
+```{r}
+cbind(`First Violation` = c("S-Chart" = sd2$violations$beyond.limits[1], 
+                            "CUSUM" = cs2_sd$violations$lower[1],
+                            "EWMA" = ewma2_sd$violations[[1]]))
+```
+
+As we can see from the table above, the first out-of-bound sample
+indicated was $41^{st}$ ($1^{st}$) for S-Chard and $42^{nd}$ ($2^{nd}$)
+for CUSUM and EWMA charts. Interestingly, the latter ones have
+distinguished the non ordinary samples below the Lower Control Limit
+(\textit{LCL}) whereas the S-Chart, above the UCL. In any case, we can
+clearly see that we managed to identify the large change in standard
+deviation really fast.
+
+# Number of faulty Coffe Bags.
+
+As for this part of the analysis, we are going to assume that we do not
+care about the quantity included in coffee bags, and that we managed to
+set a proper production line that no flaws are found for a while now. As
+a result, in order to full check the product, we now try to monitor, the
+faulty packages of the coffee bags. Let us assume that we count the
+number of bags that do not have the brand's logo in a specific place of
+the package. Let's say that we distinguish as correctly produced coffee
+bag when the brand's logo is the center. For this part of the analysis,
+we need to use p and/or np charts, depending on the formation of the
+data provided. Let us define the sample we are going to use.
+
+```{r}
+set.seed(1)
+my_sample <- c(1:40)    # Sample Numbering
+Def <- floor(runif(n = 40, min = 0, max = 8))    # Defected Products
+Size <- rep(c(8), times = 40)    # Defected Products
+Trial <- rep(c(TRUE, FALSE), times = c(30,10))
+coffee_bags <- data.frame(my_sample,Def,Size,Trial)
+head(coffee_bags)
+```
+
+Just above, we have defined the number of samples we are going acquire
+in total. Then feature \textit{Def} is indicating the number of defected
+products found within each sample. Feature \textit{Size} indicating the
+number of productes per sample and finally feature \textit{Trial} tells
+us practically if the sample examined (per line) is taken with
+\textbf{Phase I} or \textbf{Phase II}. Now we can take a closer look to
+the samples acquired for Phase I.
+
+```{r}
+with(coffee_bags, qcc(Def[Trial], sizes=Size[Trial], type="p"))
+```
+
+As we can see all the values are within the UCL and LCL and as a result,
+there is no need for us to modify the data (a.k.a. remove sample and
+recalculate UCL and LCL) and we can proceed to Phase II.
+
+```{r}
+with(coffee_bags, qcc(Def[Trial], sizes=Size[Trial], type="p", newdata=Def[!Trial], newsizes=Size[!Trial]))
+```
+
+We can see that all the samples are within range of Limits as a result,
+we can say that we are good to go.
+
+# Conclution
+
+Throughout our analysis, we have observed Shewhart, CUSUM, and EWMA
+charts multiple times and analyzed their responses to changes in both
+mean and standard deviation. An important lesson we have learned is the
+significance of selecting the appropriate chart for a given control
+mechanism. Each chart may not necessarily detect alterations in
+production line measurements effectively. Thus, it is crucial to possess
+comprehensive knowledge regarding the key factors of the production
+line. As the definitions of "small" or "big" changes differ for each
+product manufactured, having a thorough understanding of these factors
+is vital.
